@@ -1,0 +1,173 @@
+// 이커머스 ERD (DBML)
+// dbdiagram.io 에서 시각화 가능
+
+Project ecommerce {
+  database_type: 'MySQL'
+  Note: '이커머스 핵심 기능 ERD'
+}
+
+// 사용자 정보
+Table users {
+  id varchar [pk]
+  name varchar [not null]
+  email varchar [unique, not null]
+  balance decimal(10,2) [default: 0, not null] // 잔액
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (email)
+  }
+}
+
+// 잔액 충전 이력
+Table balance_history {
+  id varchar [pk]
+  user_id varchar [ref: > users.id, not null]
+  amount decimal(10,2) [not null] // 충전 금액
+  previous_balance decimal(10,2) [not null] // 충전 전 잔액
+  current_balance decimal(10,2) [not null] // 충전 후 잔액
+  payment_method varchar // 카드, 계좌이체 등
+  charged_at timestamp [default: `now()`]
+
+  indexes {
+    (user_id, charged_at)
+  }
+}
+
+// 상품 정보
+Table products {
+  id varchar [pk]
+  name varchar [not null]
+  description text
+  price decimal(10,2) [not null]
+  stock int [default: 0, not null]
+  category varchar
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (category)
+    (created_at)
+  }
+}
+
+// 장바구니
+Table cart_items {
+  id varchar [pk]
+  user_id varchar [ref: > users.id, not null]
+  product_id varchar [ref: > products.id, not null]
+  quantity int [not null]
+  added_at timestamp [default: `now()`]
+
+  indexes {
+    (user_id)
+    (product_id)
+    (user_id, product_id) [unique]
+  }
+}
+
+// 쿠폰 정보
+Table coupons {
+  id varchar [pk]
+  name varchar [not null]
+  discount_type varchar [not null] // percentage, fixed
+  discount_value decimal(10,2) [not null] // 10% = 10, 5000원 = 5000
+  max_quantity int [not null] // 최대 발급 수량
+  issued_quantity int [default: 0, not null] // 발급된 수량
+  remaining_quantity int [not null] // 남은 수량
+  expires_at timestamp [not null]
+  created_at timestamp [default: `now()`]
+
+  indexes {
+    (expires_at)
+  }
+}
+
+// 사용자 쿠폰 (발급된 쿠폰)
+Table user_coupons {
+  id varchar [pk]
+  user_id varchar [ref: > users.id, not null]
+  coupon_id varchar [ref: > coupons.id, not null]
+  status varchar [default: 'available', not null] // available, used, expired
+  issued_at timestamp [default: `now()`]
+  used_at timestamp [null]
+  expires_at timestamp [not null]
+
+  indexes {
+    (user_id, status)
+    (coupon_id)
+    (user_id, coupon_id) [unique] // 중복 발급 방지
+  }
+}
+
+// 주문 정보
+Table orders {
+  id varchar [pk]
+  user_id varchar [ref: > users.id, not null]
+  user_coupon_id varchar [ref: > user_coupons.id, null] // 사용된 쿠폰
+  total_amount decimal(10,2) [not null] // 총 금액
+  discount_amount decimal(10,2) [default: 0, not null] // 할인 금액
+  final_amount decimal(10,2) [not null] // 최종 결제 금액
+  status varchar [default: 'PENDING', not null] // PENDING, PAID, CANCELLED
+  created_at timestamp [default: `now()`]
+  paid_at timestamp [null]
+
+  indexes {
+    (user_id, status)
+    (created_at)
+    (paid_at)
+  }
+}
+
+// 주문 상세
+Table order_items {
+  id varchar [pk]
+  order_id varchar [ref: > orders.id, not null]
+  product_id varchar [ref: > products.id, not null]
+  product_name varchar [not null] // 주문 당시 상품명 (스냅샷)
+  quantity int [not null]
+  unit_price decimal(10,2) [not null] // 주문 당시 단가 (스냅샷)
+  subtotal decimal(10,2) [not null] // 소계
+
+  indexes {
+    (order_id)
+    (product_id)
+  }
+}
+
+// 외부 전송 데이터 (Outbox Pattern)
+Table outbox_events {
+  id varchar [pk]
+  order_id varchar [ref: > orders.id, not null]
+  event_type varchar [default: 'ORDER_COMPLETED', not null]
+  payload text [not null] // JSON 형태의 주문 데이터
+  synced boolean [default: false, not null] // 전송 완료 여부
+  sync_attempts int [default: 0, not null] // 전송 시도 횟수
+  synced_at timestamp [null] // 전송 완료 시각
+  last_sync_error text [null] // 마지막 전송 실패 에러 메시지
+  next_retry_at timestamp [null] // 다음 재시도 시각
+  created_at timestamp [default: `now()`]
+
+  indexes {
+    (order_id)
+    (synced)
+    (next_retry_at)
+  }
+}
+
+// 재입고 알림
+Table restock_notifications {
+  id varchar [pk]
+  user_id varchar [ref: > users.id, not null]
+  product_id varchar [ref: > products.id, not null]
+  email varchar [not null]
+  notified boolean [default: false] // 알림 발송 여부
+  notified_at timestamp [null]
+  created_at timestamp [default: `now()`]
+
+  indexes {
+    (product_id, notified)
+    (user_id)
+  }
+}
