@@ -1,8 +1,14 @@
-package com.sparta.ecommerce.presentation.controller;
+package com.sparta.ecommerce.presentation.controller.product;
 
+import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
+import com.sparta.ecommerce.application.product.GetProductsUseCase;
+import com.sparta.ecommerce.application.product.dto.ProductResponse;
+import com.sparta.ecommerce.domain.product.ProductRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +20,12 @@ import java.util.Map;
  */
 @Tag(name = "상품 관리", description = "상품 조회 및 재고 관리 API")
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/products")
 public class ProductController {
+
+    private final GetProductsUseCase getProductsUseCase;
+    private final GetProductDetailUseCase getProductDetailUseCase;
 
     /**
      * 상품 목록 조회
@@ -54,6 +64,7 @@ public class ProductController {
             )
         );
 
+
         return ResponseEntity.ok(response);
     }
 
@@ -66,17 +77,8 @@ public class ProductController {
     public ResponseEntity<?> getProductDetail(
             @Parameter(description = "상품 ID") @PathVariable String productId) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "productId", productId,
-            "name", "노트북",
-            "price", 1500000,
-            "stock", 10,
-            "category", "전자제품",
-            "description", "고성능 노트북입니다. Intel i7 프로세서, 16GB RAM, 512GB SSD"
-        );
-
-        return ResponseEntity.ok(response);
+        ProductResponse product = getProductDetailUseCase.execute(productId);
+        return ResponseEntity.ok(product);
     }
 
     /**
