@@ -1,8 +1,15 @@
-package com.sparta.ecommerce.presentation.controller;
+package com.sparta.ecommerce.presentation.controller.user;
 
+import com.sparta.ecommerce.application.user.ChargeUserBalanceUseCase;
+import com.sparta.ecommerce.application.user.GetUserBalanceUseCase;
+import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
+import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
+import com.sparta.ecommerce.application.user.dto.UserBalanceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,55 +21,50 @@ import java.util.Map;
  */
 @Tag(name = "사용자 관리", description = "사용자 잔액 및 쿠폰 관리 API")
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
 
+    private final GetUserBalanceUseCase getUserBalanceUseCase;
+    private final ChargeUserBalanceUseCase chargeUserBalanceUseCase;
+
     /**
      * 잔액 조회
-     * GET /api/users/balance
+     * GET /api/users/{userId}/balance
      */
     @Operation(summary = "잔액 조회", description = "사용자의 현재 잔액을 조회합니다")
-    @GetMapping("/balance")
+    @GetMapping("/{userId}/balance")
     public ResponseEntity<?> getBalance(
-            @Parameter(description = "사용자 ID") @RequestParam String userId) {
+            @Parameter(description = "사용자 ID")
+            @PathVariable String userId) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "userId", userId,
-            "balance", 2000000
-        );
-
-        return ResponseEntity.ok(response);
+        UserBalanceResponse userBalanceResponse = getUserBalanceUseCase.execute(userId);
+        return ResponseEntity.ok(userBalanceResponse);
     }
 
     /**
      * 잔액 충전
-     * POST /api/users/balance/charge
+     * POST /api/users/{userId}/balance/charge
      */
     @Operation(summary = "잔액 충전", description = "사용자의 잔액을 충전합니다")
-    @PostMapping("/balance/charge")
-    public ResponseEntity<?> chargeBalance(@RequestBody Object chargeRequest) {
+    @PostMapping("/{userId}/balance/charge")
+    public ResponseEntity<ChargeBalanceResponse> chargeBalance(
+            @Parameter(description = "사용자 ID")
+            @PathVariable String userId,
+            @Valid @RequestBody ChargeBalanceRequest request) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "userId", "user123",
-            "previousBalance", 2000000,
-            "chargedAmount", 500000,
-            "currentBalance", 2500000,
-            "chargedAt", "2025-10-30T14:40:00"
-        );
-
+        ChargeBalanceResponse response = chargeUserBalanceUseCase.execute(userId, request);
         return ResponseEntity.ok(response);
     }
 
     /**
      * 내 쿠폰 목록 조회
-     * GET /api/users/coupons
+     * GET /api/users/{userId}/coupons
      */
     @Operation(summary = "내 쿠폰 목록 조회", description = "사용자가 보유한 쿠폰 목록을 조회합니다")
-    @GetMapping("/coupons")
+    @GetMapping("/{userId}/coupons")
     public ResponseEntity<?> getUserCoupons(
-            @Parameter(description = "사용자 ID") @RequestParam String userId,
+            @Parameter(description = "사용자 ID") @PathVariable String userId,
             @Parameter(description = "쿠폰 상태 (available/used/expired)") @RequestParam(required = false) String status) {
 
         // Mock 데이터

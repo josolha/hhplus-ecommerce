@@ -33,7 +33,7 @@ public class InMemoryProductRepository implements ProductRepository {
         save(Product.builder()
                 .productId("P006").name("조말론").price(79000).stock(new Stock(30)).category("뷰티").build());
         save(Product.builder()
-                .productId("P007").name("킬리안").price(89000).stock(new Stock(15)).category("뷰티").build());
+                .productId("P007").name("킬리안").price(89000).stock(new Stock(0)).category("뷰티").build());
     }
 
     @Override

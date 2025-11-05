@@ -2,7 +2,6 @@ package com.sparta.ecommerce.application.product;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.*;
 
 import com.sparta.ecommerce.application.product.dto.ProductStockResponse;
 import com.sparta.ecommerce.domain.product.Product;
@@ -19,13 +18,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("상품 재고 확인 UseCase 테스트")
-class CheckProductStockUseCaseTest {
+class GetProductStockUseCaseTest {
 
     @Mock
     private ProductRepository productRepository;
 
     @InjectMocks
-    private CheckProductStockUseCase checkProductStockUseCase;
+    private GetProductStockUseCase getProductStockUseCase;
 
     @Test
     @DisplayName("재고가 있는 상품의 재고 정보를 정확히 반환한다")
@@ -44,7 +43,7 @@ class CheckProductStockUseCaseTest {
                 .willReturn(Optional.of(product));
 
         // when
-        ProductStockResponse response = checkProductStockUseCase.execute(productId);
+        ProductStockResponse response = getProductStockUseCase.execute(productId);
 
         // then
         assertThat(response).isNotNull();
@@ -72,7 +71,7 @@ class CheckProductStockUseCaseTest {
                 .willReturn(Optional.of(product));
 
         // when
-        ProductStockResponse response = checkProductStockUseCase.execute(productId);
+        ProductStockResponse response = getProductStockUseCase.execute(productId);
 
         // then
         assertThat(response).isNotNull();
@@ -92,7 +91,7 @@ class CheckProductStockUseCaseTest {
                 .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> checkProductStockUseCase.execute(productId))
+        assertThatThrownBy(() -> getProductStockUseCase.execute(productId))
                 .isInstanceOf(ProductNotFoundException.class)
                 .hasMessageContaining("상품을 찾을 수 없습니다");
 

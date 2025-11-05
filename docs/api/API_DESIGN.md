@@ -298,10 +298,12 @@ message: string                 // 에러 메시지
 ```
 
 ### 내 쿠폰 목록 조회
-#### **`GET /api/users/coupons`**
+#### **`GET /api/users/{userId}/coupons`**
+
+**Path:**
+- `userId`: 조회할 사용자 ID
 
 **Query:**
-- `userId`: 조회할 사용자 ID
 - `status`: 쿠폰 상태 필터 - "available"(사용가능), "used"(사용완료), "expired"(만료) (optional)
 
 **Response:**
@@ -344,9 +346,9 @@ message: string                 // 응답 메시지
 ## 4. 사용자 API
 
 ### 잔액 조회
-#### **`GET /api/users/balance`**
+#### **`GET /api/users/{userId}/balance`**
 
-**Query:**
+**Path:**
 - `userId`: 조회할 사용자 ID
 
 **Response:**
@@ -356,11 +358,13 @@ balance: number                 // 현재 잔액
 ```
 
 ### 잔액 충전
-#### **`POST /api/users/balance/charge`**
+#### **`POST /api/users/{userId}/balance/charge`**
+
+**Path:**
+- `userId`: 충전할 사용자 ID
 
 **Request:**
 ```
-userId: string                  // 사용자 ID
 amount: number                  // 충전 금액
 ```
 

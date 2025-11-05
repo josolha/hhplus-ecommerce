@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.presentation.controller;
+package com.sparta.ecommerce.presentation.controller.order;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

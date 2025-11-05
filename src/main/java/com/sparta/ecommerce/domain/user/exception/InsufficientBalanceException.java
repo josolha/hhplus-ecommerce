@@ -11,8 +11,12 @@ public class InsufficientBalanceException extends BusinessException {
         super(ErrorCode.PAY001);
     }
 
-    public InsufficientBalanceException(long required, long available) {
+    public InsufficientBalanceException(String message) {
+        super(ErrorCode.PAY001, message);
+    }
+
+    public InsufficientBalanceException(long required, long current) {
         super(ErrorCode.PAY001,
-              String.format("잔액이 부족합니다. 필요 금액: %d원, 잔액: %d원", required, available));
+              String.format("잔액이 부족합니다. 필요 금액: %d, 현재 잔액: %d", required, current));
     }
 }

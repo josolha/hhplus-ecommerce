@@ -1,18 +1,15 @@
 package com.sparta.ecommerce.presentation.controller.product;
 
-import com.sparta.ecommerce.application.product.CheckProductStockUseCase;
+import com.sparta.ecommerce.application.product.GetProductStockUseCase;
 import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
 import com.sparta.ecommerce.application.product.GetProductsUseCase;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductStockResponse;
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,7 +30,7 @@ public class ProductController {
 
     private final GetProductsUseCase getProductsUseCase;
     private final GetProductDetailUseCase getProductDetailUseCase;
-    private final CheckProductStockUseCase checkProductStockUseCase;
+    private final GetProductStockUseCase getProductStockUseCase;
 
     /**
      * 상품 목록 조회
@@ -79,7 +76,7 @@ public class ProductController {
             @Pattern(regexp = "P\\d{3,}", message = "상품 ID 형식이 올바르지 않습니다")
             String productId) {
 
-        ProductStockResponse response = checkProductStockUseCase.execute(productId);
+        ProductStockResponse response = getProductStockUseCase.execute(productId);
         return ResponseEntity.ok(response);
     }
 
