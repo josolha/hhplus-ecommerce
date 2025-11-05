@@ -3,6 +3,7 @@ package com.sparta.ecommerce.application.product;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.product.ProductRepository;
+import com.sparta.ecommerce.domain.product.vo.Stock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,13 +34,13 @@ class GetProductsUseCaseTest {
         testProducts = List.of(
                 Product.builder()
                         .productId("P001").name("노트북").price(1500000)
-                        .stock(10).category("전자제품").build(),
+                        .stock(new Stock(10)).category("전자제품").build(),
                 Product.builder()
                         .productId("P002").name("무선 마우스").price(35000)
-                        .stock(50).category("전자제품").build(),
+                        .stock(new Stock(10)).category("전자제품").build(),
                 Product.builder()
                         .productId("P003").name("티셔츠").price(29000)
-                        .stock(100).category("의류").build()
+                        .stock(new Stock(10)).category("의류").build()
         );
     }
 

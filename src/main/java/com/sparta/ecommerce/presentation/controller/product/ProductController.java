@@ -1,8 +1,10 @@
 package com.sparta.ecommerce.presentation.controller.product;
 
+import com.sparta.ecommerce.application.product.CheckProductStockUseCase;
 import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
 import com.sparta.ecommerce.application.product.GetProductsUseCase;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
+import com.sparta.ecommerce.application.product.dto.ProductStockResponse;
 import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.product.ProductRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +33,7 @@ public class ProductController {
 
     private final GetProductsUseCase getProductsUseCase;
     private final GetProductDetailUseCase getProductDetailUseCase;
+    private final CheckProductStockUseCase checkProductStockUseCase;
 
     /**
      * 상품 목록 조회
@@ -69,16 +72,14 @@ public class ProductController {
      */
     @Operation(summary = "재고 실시간 확인", description = "상품의 현재 재고를 실시간으로 확인합니다")
     @GetMapping("/{productId}/stock")
-    public ResponseEntity<?> getProductStock(
-            @Parameter(description = "상품 ID") @PathVariable String productId) {
+    public ResponseEntity<ProductStockResponse> getProductStock(
+            @Parameter(description = "상품 ID")
+            @PathVariable
+            @NotBlank
+            @Pattern(regexp = "P\\d{3,}", message = "상품 ID 형식이 올바르지 않습니다")
+            String productId) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "productId", productId,
-            "stock", 10,
-            "available", true
-        );
-
+        ProductStockResponse response = checkProductStockUseCase.execute(productId);
         return ResponseEntity.ok(response);
     }
 

@@ -4,6 +4,7 @@ import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.product.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
+import com.sparta.ecommerce.domain.product.vo.Stock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,7 @@ class GetProductDetailUseCaseTest {
                 .productId("P001")
                 .name("노트북")
                 .price(1500000)
-                .stock(10)
+                .stock(new Stock(10))
                 .category("전자제품")
                 .description("고성능 노트북")
                 .build();
@@ -96,7 +97,7 @@ class GetProductDetailUseCaseTest {
         assertThat(response.productId()).isEqualTo(testProduct.getProductId());
         assertThat(response.name()).isEqualTo(testProduct.getName());
         assertThat(response.price()).isEqualTo(testProduct.getPrice());
-        assertThat(response.stock()).isEqualTo(testProduct.getStock());
+        assertThat(response.stock()).isEqualTo(testProduct.getStock().quantity());
         assertThat(response.category()).isEqualTo(testProduct.getCategory());
     }
 }

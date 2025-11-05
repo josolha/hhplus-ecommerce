@@ -1,5 +1,6 @@
 package com.sparta.ecommerce.application.product.dto;
 
+import com.sparta.ecommerce.domain.product.vo.Stock;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record ProductRequest(
@@ -14,7 +15,7 @@ public record ProductRequest(
         double price,
 
         @Schema(description = "재고 수량", example = "10")
-        int stock,
+        Stock stock,
 
         @Schema(description = "카테고리", example = "전자제품")
         String category,

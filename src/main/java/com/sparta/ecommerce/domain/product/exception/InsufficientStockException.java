@@ -11,6 +11,10 @@ public class InsufficientStockException extends BusinessException {
         super(ErrorCode.P002);
     }
 
+    public InsufficientStockException(String message) {
+        super(ErrorCode.P002, message);
+    }
+
     public InsufficientStockException(int requested, int available) {
         super(ErrorCode.P002,
               String.format("재고가 부족합니다. 요청 수량: %d, 재고: %d", requested, available));

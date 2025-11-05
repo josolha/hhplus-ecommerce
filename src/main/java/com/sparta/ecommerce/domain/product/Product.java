@@ -1,5 +1,6 @@
 package com.sparta.ecommerce.domain.product;
 
+import com.sparta.ecommerce.domain.product.vo.Stock;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,7 +14,7 @@ public class Product {
     private String productId;
     private String name;
     private double price;
-    private int stock;
+    private Stock stock;
     private String category;
     private String description;
 }
