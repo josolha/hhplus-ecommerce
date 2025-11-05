@@ -3,13 +3,17 @@ package com.sparta.ecommerce.presentation.controller.product;
 import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
 import com.sparta.ecommerce.application.product.GetProductsUseCase;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
+import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.product.ProductRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +25,7 @@ import java.util.Map;
 @Tag(name = "상품 관리", description = "상품 조회 및 재고 관리 API")
 @RestController
 @RequiredArgsConstructor
+@Validated
 @RequestMapping("/api/products")
 public class ProductController {
 
@@ -33,39 +38,12 @@ public class ProductController {
      */
     @Operation(summary = "상품 목록 조회", description = "카테고리별 필터링 및 정렬 기능을 제공합니다")
     @GetMapping
-    public ResponseEntity<?> getProducts(
+    public ResponseEntity<List<ProductResponse>> getProducts(
             @Parameter(description = "카테고리별 필터링") @RequestParam(required = false) String category,
             @Parameter(description = "정렬 기준 (price/popularity/newest)") @RequestParam(required = false) String sort) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "products", List.of(
-                Map.of(
-                    "productId", "P001",
-                    "name", "노트북",
-                    "price", 1500000,
-                    "stock", 10,
-                    "category", "전자제품"
-                ),
-                Map.of(
-                    "productId", "P002",
-                    "name", "무선 마우스",
-                    "price", 35000,
-                    "stock", 50,
-                    "category", "전자제품"
-                ),
-                Map.of(
-                    "productId", "P003",
-                    "name", "키보드",
-                    "price", 89000,
-                    "stock", 25,
-                    "category", "전자제품"
-                )
-            )
-        );
-
-
-        return ResponseEntity.ok(response);
+        List<ProductResponse> products = getProductsUseCase.execute(category, sort);
+        return ResponseEntity.ok(products);
     }
 
     /**
@@ -75,7 +53,11 @@ public class ProductController {
     @Operation(summary = "상품 상세 조회", description = "특정 상품의 상세 정보를 조회합니다")
     @GetMapping("/{productId}")
     public ResponseEntity<?> getProductDetail(
-            @Parameter(description = "상품 ID") @PathVariable String productId) {
+            @Parameter(description = "상품 ID")
+            @PathVariable
+            @NotBlank
+            @Pattern(regexp = "P\\d{3,}", message = "상품 ID 형식이 올바르지 않습니다")
+            String productId) {
 
         ProductResponse product = getProductDetailUseCase.execute(productId);
         return ResponseEntity.ok(product);
