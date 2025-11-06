@@ -50,6 +50,16 @@ public class UserCoupon {
                 .build();
     }
 
+    public CouponStatus getStatus() {
+        if(isUsed()){
+            return CouponStatus.USED;
+        }
+        if(isExpired()){
+            return CouponStatus.EXPIRED;
+        }
+        return CouponStatus.AVAILABLE;
+    }
+
     /**
      * 사용 여부 확인
      */
