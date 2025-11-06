@@ -4,19 +4,23 @@ import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.product.ProductRepository;
 import com.sparta.ecommerce.domain.product.vo.Stock;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.stereotype.Repository;
 
-
+/**
+ * 인메모리 상품 저장소
+ */
 @Repository
+@RequiredArgsConstructor
 public class InMemoryProductRepository implements ProductRepository {
 
-    private final Map<String, Product> store = new ConcurrentHashMap<>();
+    private final InMemoryDataStore dataStore;
 
     @PostConstruct
     public void init() {
@@ -38,31 +42,31 @@ public class InMemoryProductRepository implements ProductRepository {
 
     @Override
     public Optional<Product> findById(String id) {
-        return Optional.ofNullable(store.get(id));
+        return Optional.ofNullable(dataStore.getProducts().get(id));
     }
 
     @Override
     public List<Product> findAll() {
-        return new ArrayList<>(store.values());
+        return new ArrayList<>(dataStore.getProducts().values());
     }
 
     @Override
     public List<Product> findByCategory(String category) {
-        return store.values().stream()
+        return dataStore.getProducts().values().stream()
                 .filter(product -> category.equals(product.getCategory()))
                 .toList();
     }
 
     @Override
     public List<Product> findAllByOrderByPriceAsc() {
-        return store.values().stream()
+        return dataStore.getProducts().values().stream()
                 .sorted(Comparator.comparing(Product::getPrice))
                 .toList();
     }
 
     @Override
     public List<Product> findByCategoryOrderByPriceAsc(String category) {
-        return store.values().stream()
+        return dataStore.getProducts().values().stream()
                 .filter(product -> category.equals(product.getCategory()))
                 .sorted(Comparator.comparing(Product::getPrice))
                 .toList();
@@ -70,6 +74,6 @@ public class InMemoryProductRepository implements ProductRepository {
 
     @Override
     public void save(Product product) {
-        store.put(product.getProductId(), product);
+        dataStore.getProducts().put(product.getProductId(), product);
     }
 }

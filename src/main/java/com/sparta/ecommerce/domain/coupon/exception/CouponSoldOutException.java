@@ -11,7 +11,7 @@ public class CouponSoldOutException extends BusinessException {
         super(ErrorCode.C001);
     }
 
-    public CouponSoldOutException(String couponId) {
-        super(ErrorCode.C001, "쿠폰이 모두 소진되었습니다: " + couponId);
+    public CouponSoldOutException(String message) {
+        super(ErrorCode.C001, message);
     }
 }

@@ -4,18 +4,19 @@ import com.sparta.ecommerce.domain.user.User;
 import com.sparta.ecommerce.domain.user.UserRepository;
 import com.sparta.ecommerce.domain.user.vo.Balance;
 import jakarta.annotation.PostConstruct;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 /**
  * 인메모리 사용자 Repository 구현체
  */
 @Repository
+@RequiredArgsConstructor
 public class InMemoryUserRepository implements UserRepository {
 
-    private final Map<String, User> store = new ConcurrentHashMap<>();
+    private final InMemoryDataStore dataStore;
 
     @PostConstruct
     public void init() {
@@ -41,12 +42,12 @@ public class InMemoryUserRepository implements UserRepository {
 
     @Override
     public Optional<User> findByUserId(String userId) {
-        return Optional.ofNullable(store.get(userId));
+        return Optional.ofNullable(dataStore.getUsers().get(userId));
     }
 
     @Override
     public User save(User user) {
-        store.put(user.getUserId(), user);
+        dataStore.getUsers().put(user.getUserId(), user);
         return user;
     }
 }

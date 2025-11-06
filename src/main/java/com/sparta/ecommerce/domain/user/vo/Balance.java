@@ -44,9 +44,7 @@ public record Balance(long amount) {
      */
     public Balance deduct(long deductAmount) {
         if (this.amount < deductAmount) {
-            throw new InsufficientBalanceException(
-                String.format("잔액이 부족합니다. 현재: %d, 요청: %d", this.amount, deductAmount)
-            );
+            throw new InsufficientBalanceException(this.amount, deductAmount);
         }
         return new Balance(this.amount - deductAmount);
     }
