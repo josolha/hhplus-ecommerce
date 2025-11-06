@@ -1,6 +1,7 @@
 package com.sparta.ecommerce.presentation.controller.coupon;
 
 import com.sparta.ecommerce.application.coupon.GetAvailableCouponsUseCase;
+import com.sparta.ecommerce.application.coupon.IssueCouponUseCase;
 import com.sparta.ecommerce.application.coupon.ValidateCouponUseCase;
 import com.sparta.ecommerce.application.coupon.dto.CouponResponse;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
@@ -35,6 +36,9 @@ class CouponControllerTest {
 
     @MockBean
     private GetAvailableCouponsUseCase getAvailableCouponsUseCase;
+
+    @MockBean
+    private IssueCouponUseCase issueCouponUseCase;
 
     @MockBean
     private ValidateCouponUseCase validateCouponUseCase;

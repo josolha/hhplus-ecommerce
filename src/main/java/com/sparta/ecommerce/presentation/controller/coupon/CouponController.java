@@ -1,8 +1,11 @@
 package com.sparta.ecommerce.presentation.controller.coupon;
 
 import com.sparta.ecommerce.application.coupon.GetAvailableCouponsUseCase;
+import com.sparta.ecommerce.application.coupon.IssueCouponUseCase;
 import com.sparta.ecommerce.application.coupon.ValidateCouponUseCase;
 import com.sparta.ecommerce.application.coupon.dto.CouponResponse;
+import com.sparta.ecommerce.application.coupon.dto.IssueCouponRequest;
+import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 쿠폰 시스템 API
@@ -27,6 +29,7 @@ public class CouponController {
 
     private final GetAvailableCouponsUseCase getAvailableCouponsUseCase;
     private final ValidateCouponUseCase validateCouponUseCase;
+    private final IssueCouponUseCase issueCouponUseCase;
 
     /**
      * 쿠폰 목록 조회 (발급 가능한 쿠폰)
@@ -45,21 +48,10 @@ public class CouponController {
      */
     @Operation(summary = "쿠폰 발급", description = "선착순으로 쿠폰을 발급합니다")
     @PostMapping("/{couponId}/issue")
-    public ResponseEntity<?> issueCoupon(
+    public ResponseEntity<UserCouponResponse> issueCoupon(
             @Parameter(description = "쿠폰 ID") @PathVariable String couponId,
-            @RequestBody Object issueRequest) {
-
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "userCouponId", "UC001",
-            "couponId", couponId,
-            "name", "신규 가입 5만원 할인 쿠폰",
-            "discountType", "fixed",
-            "discountValue", 50000,
-            "issuedAt", "2025-10-30T14:35:00",
-            "expiresAt", "2025-12-31T23:59:59"
-        );
-
+            @Valid @RequestBody IssueCouponRequest request) {
+        UserCouponResponse response = issueCouponUseCase.execute(request.userId(), couponId);
         return ResponseEntity.ok(response);
     }
 
