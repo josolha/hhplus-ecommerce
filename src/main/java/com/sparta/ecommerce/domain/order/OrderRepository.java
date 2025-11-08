@@ -27,4 +27,9 @@ public interface OrderRepository {
      * 사용자 ID와 상태로 주문 목록 조회
      */
     List<Order> findByUserIdAndStatus(String userId, OrderStatus status);
+
+    /**
+     * 최근 N일 이내의 주문 목록 조회
+     */
+    List<Order> findRecentOrders(int days);
 }

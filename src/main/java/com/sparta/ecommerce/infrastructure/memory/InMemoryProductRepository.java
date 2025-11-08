@@ -73,6 +73,15 @@ public class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
+    public List<Product> findByIds(List<String> productIds) {
+        Map<String, Product> products = dataStore.getProducts();
+        return productIds.stream()
+                .map(products::get)
+                .filter(product -> product != null)
+                .toList();
+    }
+
+    @Override
     public void save(Product product) {
         dataStore.getProducts().put(product.getProductId(), product);
     }

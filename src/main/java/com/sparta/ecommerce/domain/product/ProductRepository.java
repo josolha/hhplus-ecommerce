@@ -9,5 +9,6 @@ public interface ProductRepository {
     List<Product> findByCategory(String category);
     List<Product> findAllByOrderByPriceAsc();
     List<Product> findByCategoryOrderByPriceAsc(String category);
+    List<Product> findByIds(List<String> productIds);
     void save(Product product);
 }

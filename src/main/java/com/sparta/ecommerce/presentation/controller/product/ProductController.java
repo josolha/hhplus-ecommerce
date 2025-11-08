@@ -3,6 +3,7 @@ package com.sparta.ecommerce.presentation.controller.product;
 import com.sparta.ecommerce.application.product.GetProductStockUseCase;
 import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
 import com.sparta.ecommerce.application.product.GetProductsUseCase;
+import com.sparta.ecommerce.application.product.GetPopularProductsUseCase;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductStockResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,7 @@ public class ProductController {
     private final GetProductsUseCase getProductsUseCase;
     private final GetProductDetailUseCase getProductDetailUseCase;
     private final GetProductStockUseCase getProductStockUseCase;
+    private final GetPopularProductsUseCase getPopularProductsUseCase;
 
     /**
      * 상품 목록 조회
@@ -86,45 +88,11 @@ public class ProductController {
      */
     @Operation(summary = "인기 상품 조회", description = "최근 N일간의 인기 상품 Top N을 조회합니다")
     @GetMapping("/popular")
-    public ResponseEntity<?> getPopularProducts(
+    public ResponseEntity<List<ProductResponse>> getPopularProducts(
             @Parameter(description = "조회 기간 (일 단위)") @RequestParam(defaultValue = "3") int days,
             @Parameter(description = "조회할 상품 개수") @RequestParam(defaultValue = "5") int limit) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "period", Map.of(
-                "days", days,
-                "startDate", "2025-10-27",
-                "endDate", "2025-10-30"
-            ),
-            "products", List.of(
-                Map.of(
-                    "productId", "P001",
-                    "name", "노트북",
-                    "price", 1500000,
-                    "stock", 10,
-                    "orderCount", 150,
-                    "rank", 1
-                ),
-                Map.of(
-                    "productId", "P002",
-                    "name", "무선 마우스",
-                    "price", 35000,
-                    "stock", 50,
-                    "orderCount", 120,
-                    "rank", 2
-                ),
-                Map.of(
-                    "productId", "P003",
-                    "name", "키보드",
-                    "price", 89000,
-                    "stock", 25,
-                    "orderCount", 95,
-                    "rank", 3
-                )
-            )
-        );
-
-        return ResponseEntity.ok(response);
+        List<ProductResponse> products = getPopularProductsUseCase.execute(days, limit);
+        return ResponseEntity.ok(products);
     }
 }

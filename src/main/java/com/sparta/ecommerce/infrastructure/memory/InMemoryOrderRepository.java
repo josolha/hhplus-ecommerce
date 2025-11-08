@@ -6,6 +6,7 @@ import com.sparta.ecommerce.domain.order.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +38,14 @@ public class InMemoryOrderRepository implements OrderRepository {
         return dataStore.getOrders().values().stream()
                 .filter(order -> order.getUserId().equals(userId))
                 .filter(order -> order.getStatus() == status)
+                .toList();
+    }
+
+    @Override
+    public List<Order> findRecentOrders(int days) {
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
+        return dataStore.getOrders().values().stream()
+                .filter(order -> order.getCreatedAt().isAfter(cutoffDate))
                 .toList();
     }
 }
