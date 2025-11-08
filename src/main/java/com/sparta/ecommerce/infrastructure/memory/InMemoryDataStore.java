@@ -3,6 +3,7 @@ package com.sparta.ecommerce.infrastructure.memory;
 import com.sparta.ecommerce.domain.cart.Cart;
 import com.sparta.ecommerce.domain.coupon.Coupon;
 import com.sparta.ecommerce.domain.coupon.UserCoupon;
+import com.sparta.ecommerce.domain.order.Order;
 import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.user.User;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class InMemoryDataStore {
     private final Map<String, User> users = new ConcurrentHashMap<>();
     private final Map<String, UserCoupon> userCoupons = new ConcurrentHashMap<>();
     private final Map<String, Cart> carts = new ConcurrentHashMap<>();
+    private final Map<String, Order> orders = new ConcurrentHashMap<>();
 
     /**
      * 모든 데이터 초기화 (테스트용)
@@ -34,5 +36,6 @@ public class InMemoryDataStore {
         users.clear();
         userCoupons.clear();
         carts.clear();
+        orders.clear();
     }
 }

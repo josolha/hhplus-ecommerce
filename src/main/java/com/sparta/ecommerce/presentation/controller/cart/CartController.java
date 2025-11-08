@@ -80,8 +80,10 @@ public class CartController {
     @Operation(summary = "장바구니 상품 삭제", description = "장바구니에서 상품을 삭제합니다")
     @DeleteMapping("/items/{cartItemId}")
     public ResponseEntity<Map<String, String>> deleteCartItem(
-            @Parameter(description = "사용자 ID") @RequestParam String userId,
-            @Parameter(description = "장바구니 항목 ID") @PathVariable String cartItemId) {
+            @Parameter(description = "사용자 ID")
+            @RequestParam String userId,
+            @Parameter(description = "장바구니 항목 ID")
+            @PathVariable String cartItemId) {
 
         removeFromCartUseCase.execute(userId, cartItemId);
         return ResponseEntity.ok(Map.of("message", "장바구니에서 삭제되었습니다"));

@@ -1,13 +1,15 @@
 package com.sparta.ecommerce.presentation.controller.order;
 
+import com.sparta.ecommerce.application.order.CreateOrderUseCase;
+import com.sparta.ecommerce.application.order.GetOrderDetailUseCase;
+import com.sparta.ecommerce.application.order.GetOrdersUseCase;
+import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * 주문 관리 API
@@ -15,7 +17,12 @@ import java.util.Map;
 @Tag(name = "주문 관리", description = "주문 생성 및 조회 API")
 @RestController
 @RequestMapping("/api/orders")
+@RequiredArgsConstructor
 public class OrderController {
+
+    private final CreateOrderUseCase createOrderUseCase;
+    private final GetOrdersUseCase getOrdersUseCase;
+    private final GetOrderDetailUseCase getOrderDetailUseCase;
 
     /**
      * 주문 생성 (결제)
@@ -23,26 +30,8 @@ public class OrderController {
      */
     @Operation(summary = "주문 생성", description = "장바구니 상품을 주문하고 결제를 진행합니다")
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody Object orderRequest) {
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "orderId", "ORD20251030001",
-            "items", List.of(
-                Map.of(
-                    "productId", "P001",
-                    "productName", "노트북",
-                    "price", 1500000,
-                    "quantity", 1,
-                    "subtotal", 1500000
-                )
-            ),
-            "totalAmount", 1500000,
-            "discountAmount", 50000,
-            "finalAmount", 1450000,
-            "remainingBalance", 550000,
-            "createdAt", "2025-10-30T14:30:00"
-        );
-
+    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest orderRequest) {
+        var response = createOrderUseCase.execute(orderRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -58,33 +47,7 @@ public class OrderController {
             @Parameter(description = "페이지당 조회 개수") @RequestParam(defaultValue = "10") int limit,
             @Parameter(description = "주문 상태 (completed/cancelled)") @RequestParam(required = false) String status) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "orders", List.of(
-                Map.of(
-                    "orderId", "ORD20251030001",
-                    "totalAmount", 1500000,
-                    "discountAmount", 50000,
-                    "finalAmount", 1450000,
-                    "status", "completed",
-                    "createdAt", "2025-10-30T14:30:00"
-                ),
-                Map.of(
-                    "orderId", "ORD20251029001",
-                    "totalAmount", 89000,
-                    "discountAmount", 0,
-                    "finalAmount", 89000,
-                    "status", "completed",
-                    "createdAt", "2025-10-29T10:15:00"
-                )
-            ),
-            "pagination", Map.of(
-                "currentPage", page,
-                "totalPages", 3,
-                "totalCount", 25
-            )
-        );
-
+        var response = getOrdersUseCase.execute(userId, page, limit, status);
         return ResponseEntity.ok(response);
     }
 
@@ -97,26 +60,7 @@ public class OrderController {
     public ResponseEntity<?> getOrderDetail(
             @Parameter(description = "주문 ID") @PathVariable String orderId) {
 
-        // Mock 데이터
-        Map<String, Object> response = Map.of(
-            "orderId", orderId,
-            "items", List.of(
-                Map.of(
-                    "productId", "P001",
-                    "productName", "노트북",
-                    "price", 1500000,
-                    "quantity", 1,
-                    "subtotal", 1500000
-                )
-            ),
-            "totalAmount", 1500000,
-            "discountAmount", 50000,
-            "finalAmount", 1450000,
-            "couponId", "C001",
-            "status", "completed",
-            "createdAt", "2025-10-30T14:30:00"
-        );
-
+        var response = getOrderDetailUseCase.execute(orderId);
         return ResponseEntity.ok(response);
     }
 }

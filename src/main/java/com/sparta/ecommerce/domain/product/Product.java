@@ -17,22 +17,15 @@ public class Product {
     private Stock stock;
     private String category;
     private String description;
+
+    /*장바구니 담기 전용*/
+    public boolean canAddToCart(int requestQuantity) {
+        return stock.isAvailable(requestQuantity);
+    }
+
+    /*결제시 검증 + 차감용*/
+    public void reserveStock(int requestQuantity) {
+        this.stock = stock.decrease(requestQuantity);
+    }
 }
 
-/*
-// 상품 정보
-Table products {
-id varchar [pk]
-name varchar [not null]
-description text
-price decimal(10,2) [not null]
-stock int [default: 0, not null]
-category varchar
-created_at timestamp [default: `now()`]
-updated_at timestamp [default: `now()`]
-
-indexes {
-    (category)
-            (created_at)
-}
-}*/
