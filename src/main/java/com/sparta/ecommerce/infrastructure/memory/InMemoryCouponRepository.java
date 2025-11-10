@@ -12,15 +12,30 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 인메모리 쿠폰 저장소
+ *
+ * Concurrency Control:
+ * - ReadWriteLock 사용으로 읽기 성능 최적화
+ * - 읽기(Read Lock): 여러 스레드 동시 접근 가능
+ * - 쓰기(Write Lock): 단독 접근만 허용
+ * - 실제 DB 환경에서는 SELECT FOR UPDATE로 대체됨
  */
 @Repository
 @RequiredArgsConstructor
 public class InMemoryCouponRepository implements CouponRepository {
 
     private final InMemoryDataStore dataStore;
+
+    /**
+     * ReadWriteLock: 읽기/쓰기 분리로 동시성 향상
+     * - 읽기 락: 공유 가능 (여러 스레드가 동시에 읽기 가능)
+     * - 쓰기 락: 배타적 (쓰기 중에는 읽기/쓰기 모두 차단)
+     */
+    private final ReadWriteLock couponLock = new ReentrantReadWriteLock();
 
     @PostConstruct
     public void init() {
@@ -83,23 +98,60 @@ public class InMemoryCouponRepository implements CouponRepository {
 
     @Override
     public Optional<Coupon> findById(String couponId) {
-        return Optional.ofNullable(dataStore.getCoupons().get(couponId));
+        // 읽기 락 사용: 여러 스레드가 동시에 조회 가능
+        couponLock.readLock().lock();
+        try {
+            return Optional.ofNullable(dataStore.getCoupons().get(couponId));
+        } finally {
+            couponLock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public Optional<Coupon> findByIdWithLock(String couponId) {
+        // 쓰기 락 사용: 비관적 락 시뮬레이션
+        // 실제 DB 환경: SELECT * FROM coupon WHERE id = ? FOR UPDATE
+        // 쓰기 락이므로 다른 모든 스레드(읽기/쓰기)를 차단
+        couponLock.writeLock().lock();
+        try {
+            return Optional.ofNullable(dataStore.getCoupons().get(couponId));
+        } finally {
+            couponLock.writeLock().unlock();
+        }
     }
 
     @Override
     public List<Coupon> findAll() {
-        return new ArrayList<>(dataStore.getCoupons().values());
+        // 읽기 락: 전체 조회는 여러 스레드가 동시 실행 가능
+        couponLock.readLock().lock();
+        try {
+            return new ArrayList<>(dataStore.getCoupons().values());
+        } finally {
+            couponLock.readLock().unlock();
+        }
     }
 
     @Override
     public List<Coupon> findAvailableCoupons() {
-        return dataStore.getCoupons().values().stream()
-                .filter(Coupon::isAvailable)
-                .toList();
+        // 읽기 락: 필터링 조회도 여러 스레드가 동시 실행 가능
+        couponLock.readLock().lock();
+        try {
+            return dataStore.getCoupons().values().stream()
+                    .filter(Coupon::isAvailable)
+                    .toList();
+        } finally {
+            couponLock.readLock().unlock();
+        }
     }
 
     @Override
     public void save(Coupon coupon) {
-        dataStore.getCoupons().put(coupon.getCouponId(), coupon);
+        // 쓰기 락: 저장은 배타적으로 실행 (다른 읽기/쓰기 차단)
+        couponLock.writeLock().lock();
+        try {
+            dataStore.getCoupons().put(coupon.getCouponId(), coupon);
+        } finally {
+            couponLock.writeLock().unlock();
+        }
     }
 }

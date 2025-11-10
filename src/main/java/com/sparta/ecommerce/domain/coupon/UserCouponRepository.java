@@ -23,6 +23,12 @@ public interface UserCouponRepository {
     boolean existsByUserIdAndCouponId(String userId, String couponId);
 
     /**
+     * 사용자가 특정 쿠폰을 이미 발급받았는지 확인 (비관적 락)
+     * 동시성 제어를 위해 락을 획득하고 확인
+     */
+    boolean existsByUserIdAndCouponIdWithLock(String userId, String couponId);
+
+    /**
      * 사용자 쿠폰 저장
      */
     UserCoupon save(UserCoupon userCoupon);

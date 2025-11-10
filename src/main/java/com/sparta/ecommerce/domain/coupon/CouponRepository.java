@@ -13,6 +13,13 @@ public interface CouponRepository {
     Optional<Coupon> findById(String couponId);
 
     /**
+     * ID로 쿠폰 조회 (비관적 락)
+     * 데이터베이스 환경에서는 SELECT FOR UPDATE로 구현
+     * 동시성 제어를 위해 락을 획득하고 조회
+     */
+    Optional<Coupon> findByIdWithLock(String couponId);
+
+    /**
      * 모든 쿠폰 조회
      */
     List<Coupon> findAll();

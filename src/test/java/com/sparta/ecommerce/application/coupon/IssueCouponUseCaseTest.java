@@ -62,8 +62,8 @@ class IssueCouponUseCaseTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
-        given(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).willReturn(false);
+        given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.of(coupon));
+        given(userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)).willReturn(false);
 
         // when
         UserCouponResponse response = issueCouponUseCase.execute(userId, couponId);
@@ -89,7 +89,7 @@ class IssueCouponUseCaseTest {
         String userId = "U001";
         String couponId = "INVALID";
 
-        given(couponRepository.findById(couponId)).willReturn(Optional.empty());
+        given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> issueCouponUseCase.execute(userId, couponId))
@@ -115,8 +115,8 @@ class IssueCouponUseCaseTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
-        given(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).willReturn(true);
+        given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.of(coupon));
+        given(userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)).willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> issueCouponUseCase.execute(userId, couponId))
@@ -142,8 +142,8 @@ class IssueCouponUseCaseTest {
                 .createdAt(LocalDateTime.now().minusMonths(1))
                 .build();
 
-        given(couponRepository.findById(couponId)).willReturn(Optional.of(expiredCoupon));
-        given(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).willReturn(false);
+        given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.of(expiredCoupon));
+        given(userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> issueCouponUseCase.execute(userId, couponId))
@@ -169,8 +169,8 @@ class IssueCouponUseCaseTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        given(couponRepository.findById(couponId)).willReturn(Optional.of(soldOutCoupon));
-        given(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).willReturn(false);
+        given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.of(soldOutCoupon));
+        given(userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> issueCouponUseCase.execute(userId, couponId))
@@ -196,8 +196,8 @@ class IssueCouponUseCaseTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
-        given(userCouponRepository.existsByUserIdAndCouponId(userId, couponId)).willReturn(false);
+        given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.of(coupon));
+        given(userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)).willReturn(false);
 
         ArgumentCaptor<Coupon> couponCaptor = ArgumentCaptor.forClass(Coupon.class);
 
