@@ -1,13 +1,21 @@
 package com.sparta.ecommerce.domain.user.vo;
 
 import com.sparta.ecommerce.domain.user.exception.InsufficientBalanceException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 /**
  * 잔액 Value Object
  * 잔액과 관련된 비즈니스 로직을 캡슐화
  */
-public record Balance(long amount) {
 
+@Embeddable
+public record Balance(
+
+        @Column(name = "balance", nullable = false)
+        long amount
+
+    ) {
     /**
      * Compact constructor - 유효성 검증
      */

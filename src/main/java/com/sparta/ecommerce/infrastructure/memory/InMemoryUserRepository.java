@@ -1,7 +1,8 @@
+/*
 package com.sparta.ecommerce.infrastructure.memory;
 
-import com.sparta.ecommerce.domain.user.User;
-import com.sparta.ecommerce.domain.user.UserRepository;
+import com.sparta.ecommerce.domain.user.entity.User;
+import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.vo.Balance;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +10,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+*/
 /**
  * 인메모리 사용자 Repository 구현체
- */
+ *//*
+
 @Repository
 @RequiredArgsConstructor
 public class InMemoryUserRepository implements UserRepository {
@@ -51,3 +54,4 @@ public class InMemoryUserRepository implements UserRepository {
         return user;
     }
 }
+*/

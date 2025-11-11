@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce_dev?serverTimezone=Asia/Seoul
+    username: root
+    password: wh&2014thfgk1
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # 스키마 업데이트
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8081
+
+logging:
+  level:
+    org.hibernate.SQL: info
+    com.sparta.ecommerce: info

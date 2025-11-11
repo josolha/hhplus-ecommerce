@@ -1,6 +1,15 @@
-package com.sparta.ecommerce.domain.user;
+package com.sparta.ecommerce.domain.user.entity;
 
+import com.sparta.ecommerce.domain.common.BaseEntity;
 import com.sparta.ecommerce.domain.user.vo.Balance;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,14 +18,25 @@ import lombok.NoArgsConstructor;
 /**
  * 사용자 도메인 엔티티
  */
+@Entity
+@Table(name="users")
 @Getter
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class User {
+public class User extends BaseEntity {
+
+    @Id
+    @Column(name="id")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String userId;
+
+    @Column(nullable = false)
     private String name;
+
+    @Embedded
     private Balance balance;
+
 
     /**
      * 잔액 충전

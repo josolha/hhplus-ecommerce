@@ -5,7 +5,7 @@ import com.sparta.ecommerce.domain.coupon.Coupon;
 import com.sparta.ecommerce.domain.coupon.UserCoupon;
 import com.sparta.ecommerce.domain.order.Order;
 import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.user.User;
+import com.sparta.ecommerce.domain.user.entity.User;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 

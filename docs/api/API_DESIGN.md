@@ -54,22 +54,18 @@ available: boolean        // 재고 있음 여부
 
 **Response:**
 ```
-period: {
-  days: number,           // 조회된 일수
-  startDate: string,      // 조회 시작일 (YYYY-MM-DD)
-  endDate: string         // 조회 종료일 (YYYY-MM-DD)
-}
-products: [
+[
   {
     productId: string,    // 상품 ID
     name: string,         // 상품명
     price: number,        // 가격
     stock: number,        // 재고 수량
-    orderCount: number,   // 주문 수
-    rank: number          // 순위
+    category: string      // 카테고리
   }
 ]
 ```
+
+> **참고:** 인기 상품은 Redis에서 실시간 집계되며, 5분 TTL 캐시로 제공됩니다.
 
 ---
 
@@ -143,14 +139,13 @@ message: string               // 응답 메시지
 **Request:**
 ```
 userId: string                // 사용자 ID
-items: [
-  {
-    productId: string,        // 상품 ID
-    quantity: number          // 수량
-  }
-]
 couponId: string (optional)   // 쿠폰 ID
 ```
+
+> **참고:**
+> - 주문 항목은 사용자의 장바구니에서 자동으로 가져옵니다.
+> - 주문 생성 시 즉시 재고 차감 및 잔액 결제가 처리됩니다.
+> - 트랜잭션으로 묶여 있어 일부만 성공하는 경우는 없습니다.
 
 **Response:**
 ```
@@ -199,7 +194,7 @@ currentBalance: number        // 현재 잔액
 - `userId`: 조회할 사용자 ID
 - `page`: 페이지 번호 (default: 1)
 - `limit`: 페이지당 조회 개수 (default: 10)
-- `status`: 주문 상태 필터 - "completed"(완료), "cancelled"(취소) (optional)
+- `status`: 주문 상태 필터 - "COMPLETED"(완료), "CANCELLED"(취소) (optional)
 
 **Response:**
 ```
@@ -209,7 +204,7 @@ orders: [
     totalAmount: number,      // 총 금액
     discountAmount: number,   // 할인 금액
     finalAmount: number,      // 최종 결제 금액
-    status: string,           // 주문 상태
+    status: string,           // 주문 상태 (COMPLETED/CANCELLED)
     createdAt: string         // 주문 생성 일시
   }
 ]
@@ -239,9 +234,11 @@ totalAmount: number           // 총 금액
 discountAmount: number        // 할인 금액
 finalAmount: number           // 최종 결제 금액
 couponId: string (optional)   // 사용된 쿠폰 ID
-status: string                // 주문 상태
+status: string                // 주문 상태 (COMPLETED/CANCELLED)
 createdAt: string             // 주문 생성 일시
 ```
+
+> **참고:** 주문 생성 시 즉시 결제가 처리되며(balance 차감), 성공 시 상태는 COMPLETED가 됩니다.
 
 ---
 

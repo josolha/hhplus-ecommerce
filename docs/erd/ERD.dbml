@@ -15,6 +15,7 @@ Table users {
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 
+
   indexes {
     (email)
   }
@@ -49,6 +50,7 @@ Table products {
   indexes {
     (category)
     (created_at)
+    (stock) // 재고 조회 최적화
   }
 }
 
@@ -78,9 +80,11 @@ Table coupons {
   remaining_quantity int [not null] // 남은 수량
   expires_at timestamp [not null]
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
 
   indexes {
     (expires_at)
+    (remaining_quantity)
   }
 }
 
@@ -109,13 +113,14 @@ Table orders {
   total_amount decimal(10,2) [not null] // 총 금액
   discount_amount decimal(10,2) [default: 0, not null] // 할인 금액
   final_amount decimal(10,2) [not null] // 최종 결제 금액
-  status varchar [default: 'PENDING', not null] // PENDING, PAID, CANCELLED
+  status varchar [default: 'COMPLETED', not null] // COMPLETED, CANCELLED
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
   paid_at timestamp [null]
 
   indexes {
-    (user_id, status)
-    (created_at)
+    (user_id, created_at)
+    (status)
     (paid_at)
   }
 }
@@ -129,10 +134,30 @@ Table order_items {
   quantity int [not null]
   unit_price decimal(10,2) [not null] // 주문 당시 단가 (스냅샷)
   subtotal decimal(10,2) [not null] // 소계
+  created_at timestamp [default: `now()`]
 
   indexes {
     (order_id)
     (product_id)
+  }
+}
+
+// 결제 정보
+Table payments {
+  id varchar [pk]
+  order_id varchar [ref: - orders.id, not null] // 1:1 관계
+  user_id varchar [ref: > users.id, not null]
+  amount decimal(10,2) [not null] // 결제 금액
+  payment_method varchar [default: 'balance', not null] // balance, card, transfer 등
+  status varchar [default: 'completed', not null] // completed, failed, refunded
+  paid_at timestamp [default: `now()`]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (order_id) [unique]
+    (user_id, paid_at)
+    (status)
   }
 }
 

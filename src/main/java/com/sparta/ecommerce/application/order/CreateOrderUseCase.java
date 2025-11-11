@@ -21,8 +21,8 @@ import com.sparta.ecommerce.domain.product.Product;
 import com.sparta.ecommerce.domain.product.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.InsufficientStockException;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
-import com.sparta.ecommerce.domain.user.User;
-import com.sparta.ecommerce.domain.user.UserRepository;
+import com.sparta.ecommerce.domain.user.entity.User;
+import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.exception.InsufficientBalanceException;
 import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -127,7 +127,7 @@ public class CreateOrderUseCase {
         long finalAmount = totalAmount - discountAmount;
 
         // 4. 잔액 확인 및 차감
-        User user = userRepository.findByUserId(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         if (!user.getBalance().isSufficient((int) finalAmount)) {
