@@ -1,8 +1,6 @@
 package com.sparta.ecommerce.infrastructure.config;
 
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
-import com.sparta.ecommerce.domain.product.vo.Stock;
+import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.user.entity.BalanceHistory;
 import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
@@ -37,6 +35,7 @@ public class DataInitializer {
             for (int i = 1; i <= 10; i++) {
                 User user = User.builder()
                         .name("테스트유저" + i)
+                        .email("user" + i + "@test.com")
                         .balance(new Balance(100000L * i))
                         .build();
                 user = userRepository.save(user);
@@ -49,7 +48,7 @@ public class DataInitializer {
                 long firstCharge = (long) (finalBalance * 0.4);
                 balanceHistoryRepository.save(
                         BalanceHistory.builder()
-                                .user(user)
+                                .userId(user.getUserId())
                                 .amount(firstCharge)
                                 .previousBalance(0L)
                                 .currentBalance(firstCharge)
@@ -61,7 +60,7 @@ public class DataInitializer {
                 long secondCharge = (long) (finalBalance * 0.3);
                 balanceHistoryRepository.save(
                         BalanceHistory.builder()
-                                .user(user)
+                                .userId(user.getUserId())
                                 .amount(secondCharge)
                                 .previousBalance(firstCharge)
                                 .currentBalance(firstCharge + secondCharge)
@@ -73,7 +72,7 @@ public class DataInitializer {
                 long thirdCharge = finalBalance - firstCharge - secondCharge;
                 balanceHistoryRepository.save(
                         BalanceHistory.builder()
-                                .user(user)
+                                .userId(user.getUserId())
                                 .amount(thirdCharge)
                                 .previousBalance(firstCharge + secondCharge)
                                 .currentBalance(finalBalance)

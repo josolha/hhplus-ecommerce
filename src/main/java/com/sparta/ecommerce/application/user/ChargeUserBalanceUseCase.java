@@ -9,6 +9,7 @@ import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
 import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.vo.Balance;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class ChargeUserBalanceUseCase {
     private final UserRepository userRepository;
     private final BalanceHistoryRepository balanceHistoryRepository;
 
+    @Transactional
     public ChargeBalanceResponse execute(String userId, ChargeBalanceRequest request) {
         // 1. 사용자 조회
         User user = userRepository.findById(userId)
@@ -36,7 +38,7 @@ public class ChargeUserBalanceUseCase {
         // 4. 충전 이력 저장
         balanceHistoryRepository.save(
                 BalanceHistory.builder()
-                        .user(user)
+                        .userId(userId)
                         .amount(request.amount())
                         .previousBalance(previousBalance.amount())
                         .currentBalance(user.getBalance().amount())

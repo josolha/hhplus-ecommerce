@@ -1,12 +1,12 @@
 package com.sparta.ecommerce.application.user;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.CouponStatus;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
-import com.sparta.ecommerce.domain.coupon.UserCoupon;
-import com.sparta.ecommerce.domain.coupon.UserCouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.UserCoupon;
+import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

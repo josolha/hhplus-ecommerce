@@ -2,13 +2,11 @@ package com.sparta.ecommerce.application.cart;
 
 import com.sparta.ecommerce.application.cart.dto.CartItemResponse;
 import com.sparta.ecommerce.application.cart.dto.UpdateCartItemRequest;
-import com.sparta.ecommerce.domain.cart.Cart;
-import com.sparta.ecommerce.domain.cart.CartItem;
-import com.sparta.ecommerce.domain.cart.CartRepository;
+import com.sparta.ecommerce.domain.cart.entity.CartItem;
+import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;
 import com.sparta.ecommerce.domain.cart.exception.CartItemNotFoundException;
-import com.sparta.ecommerce.domain.cart.exception.CartNotFoundException;
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
+import com.sparta.ecommerce.domain.product.entity.Product;
+import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UpdateCartItemUseCase {
 
-    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
 
     /**
@@ -31,28 +29,17 @@ public class UpdateCartItemUseCase {
      * @return 변경된 장바구니 항목 정보
      */
     public CartItemResponse execute(String userId, String cartItemId, UpdateCartItemRequest request) {
-        // 1. 사용자의 장바구니 조회
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new CartNotFoundException(userId));
-
-        // 2. 해당 항목 찾기
-        CartItem targetItem = cart.getItems().stream()
-                .filter(item -> item.getCartItemId().equals(cartItemId))
-                .findFirst()
+        // 1. 장바구니 아이템 조회
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CartItemNotFoundException(cartItemId));
 
-        // 3. 수량 변경
-        Cart updatedCart = cart.updateItemQuantity(cartItemId, request.quantity());
-        cartRepository.save(updatedCart);
+        // 2. 수량 변경
+        CartItem updatedItem = cartItem.updateQuantity(request.quantity());
+        cartItemRepository.save(updatedItem);
 
-        // 4. 상품 정보 조회 및 응답 생성
-        Product product = productRepository.findById(targetItem.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException(targetItem.getProductId()));
-
-        CartItem updatedItem = updatedCart.getItems().stream()
-                .filter(item -> item.getCartItemId().equals(cartItemId))
-                .findFirst()
-                .orElseThrow();
+        // 3. 상품 정보 조회 및 응답 생성
+        Product product = productRepository.findById(updatedItem.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException(updatedItem.getProductId()));
 
         return CartItemResponse.from(updatedItem, product);
     }

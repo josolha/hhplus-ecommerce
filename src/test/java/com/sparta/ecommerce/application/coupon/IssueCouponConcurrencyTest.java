@@ -1,10 +1,10 @@
 package com.sparta.ecommerce.application.coupon;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
-import com.sparta.ecommerce.domain.coupon.UserCouponRepository;
+import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
 import com.sparta.ecommerce.infrastructure.memory.InMemoryCouponRepository;
 import com.sparta.ecommerce.infrastructure.memory.InMemoryDataStore;

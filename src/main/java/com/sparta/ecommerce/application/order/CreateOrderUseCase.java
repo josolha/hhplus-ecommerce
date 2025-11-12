@@ -2,23 +2,24 @@ package com.sparta.ecommerce.application.order;
 
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
-import com.sparta.ecommerce.domain.cart.Cart;
-import com.sparta.ecommerce.domain.cart.CartItem;
-import com.sparta.ecommerce.domain.cart.CartRepository;
+import com.sparta.ecommerce.domain.cart.entity.Cart;
+import com.sparta.ecommerce.domain.cart.entity.CartItem;
+import com.sparta.ecommerce.domain.cart.repository.CartRepository;
+import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;
 import com.sparta.ecommerce.domain.cart.exception.EmptyCartException;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
-import com.sparta.ecommerce.domain.coupon.UserCoupon;
-import com.sparta.ecommerce.domain.coupon.UserCouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.UserCoupon;
+import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import com.sparta.ecommerce.domain.coupon.exception.CouponAlreadyUsedException;
 import com.sparta.ecommerce.domain.coupon.exception.CouponExpiredException;
 import com.sparta.ecommerce.domain.coupon.exception.InvalidCouponException;
-import com.sparta.ecommerce.domain.order.Order;
-import com.sparta.ecommerce.domain.order.OrderItem;
-import com.sparta.ecommerce.domain.order.OrderRepository;
+import com.sparta.ecommerce.domain.order.entity.Order;
+import com.sparta.ecommerce.domain.order.entity.OrderItem;
+import com.sparta.ecommerce.domain.order.repository.OrderRepository;
 import com.sparta.ecommerce.domain.order.OrderStatus;
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
+import com.sparta.ecommerce.domain.product.entity.Product;
+import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.InsufficientStockException;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import com.sparta.ecommerce.domain.user.entity.User;
@@ -39,6 +40,7 @@ public class CreateOrderUseCase {
 
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;          // 장바구니 조회
+    private final CartItemRepository cartItemRepository;  // 장바구니 아이템 조회
     private final ProductRepository productRepository;    // 상품 정보, 재고 차감
     private final UserRepository userRepository;          // 잔액 조회, 차감
     private final CouponRepository couponRepository;      // 쿠폰 조회
@@ -56,13 +58,12 @@ public class CreateOrderUseCase {
 
         // 1. 장바구니 조회
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(() -> Cart.builder()
-                        .cartId("CART_" + userId)
-                        .userId(userId)
-                        .items(new ArrayList<>())
-                        .build());
+                .orElseThrow(() -> new EmptyCartException("장바구니가 존재하지 않습니다"));
 
-        if (cart.isEmpty()) {
+        // 장바구니 아이템 조회
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getCartId());
+
+        if (cartItems.isEmpty()) {
             throw new EmptyCartException("장바구니가 비어있습니다");
         }
 
@@ -70,7 +71,7 @@ public class CreateOrderUseCase {
         long totalAmount = 0;
         List<OrderItem> orderItems = new ArrayList<>();
 
-        for (CartItem cartItem : cart.getItems()) {
+        for (CartItem cartItem : cartItems) {
             // 상품 조회
             Product product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(cartItem.getProductId()));
@@ -90,7 +91,7 @@ public class CreateOrderUseCase {
             OrderItem orderItem = OrderItem.builder()
                     .productId(product.getProductId())
                     .productName(product.getName())
-                    .price(price)
+                    .unitPrice(price)
                     .quantity(cartItem.getQuantity())
                     .subtotal(subtotal)
                     .build();
@@ -140,7 +141,7 @@ public class CreateOrderUseCase {
         userRepository.save(user);
 
         // 5. 재고 차감
-        for (CartItem cartItem : cart.getItems()) {
+        for (CartItem cartItem : cartItems) {
             Product product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(cartItem.getProductId()));
 
@@ -153,13 +154,11 @@ public class CreateOrderUseCase {
         Order order = Order.builder()
                 .orderId(orderId)
                 .userId(userId)
-                .items(orderItems)
                 .totalAmount(totalAmount)
                 .discountAmount(discountAmount)
                 .finalAmount(finalAmount)
-                .couponId(couponId)
+                .userCouponId(couponId)
                 .status(OrderStatus.COMPLETED)
-                .createdAt(LocalDateTime.now())
                 .build();
 
         orderRepository.save(order);
@@ -176,10 +175,9 @@ public class CreateOrderUseCase {
         }
 
         // 8. 장바구니 비우기
-        Cart emptyCart = cart.clear();
-        cartRepository.save(emptyCart);
+        cartItemRepository.deleteByCartId(cart.getCartId());
 
         // 9. 응답 생성
-        return OrderResponse.from(order, user.getBalance().amount());
+        return OrderResponse.from(order, orderItems, user.getBalance().amount());
     }
 }

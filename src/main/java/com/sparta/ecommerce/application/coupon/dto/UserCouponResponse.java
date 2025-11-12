@@ -1,8 +1,8 @@
 package com.sparta.ecommerce.application.coupon.dto;
 
-import com.sparta.ecommerce.domain.coupon.Coupon;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
-import com.sparta.ecommerce.domain.coupon.UserCoupon;
+import com.sparta.ecommerce.domain.coupon.entity.UserCoupon;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public record UserCouponResponse(
         DiscountType discountType,
 
         @Schema(description = "할인 값", example = "50000")
-        int discountValue,
+        long discountValue,
 
         @Schema(description = "발급 일시", example = "2025-11-06T17:00:00")
         LocalDateTime issuedAt,

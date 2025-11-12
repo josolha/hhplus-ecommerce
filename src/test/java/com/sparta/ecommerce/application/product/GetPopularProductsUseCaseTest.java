@@ -1,12 +1,12 @@
 package com.sparta.ecommerce.application.product;
 
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
-import com.sparta.ecommerce.domain.order.Order;
-import com.sparta.ecommerce.domain.order.OrderItem;
-import com.sparta.ecommerce.domain.order.OrderRepository;
+import com.sparta.ecommerce.domain.order.entity.Order;
+import com.sparta.ecommerce.domain.order.entity.OrderItem;
+import com.sparta.ecommerce.domain.order.repository.OrderRepository;
 import com.sparta.ecommerce.domain.order.OrderStatus;
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
+import com.sparta.ecommerce.domain.product.entity.Product;
+import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.vo.Stock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

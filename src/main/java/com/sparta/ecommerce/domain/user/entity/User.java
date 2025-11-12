@@ -32,6 +32,9 @@ public class User extends BaseEntity {
     private String userId;
 
     @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
     private String name;
 
     @Embedded

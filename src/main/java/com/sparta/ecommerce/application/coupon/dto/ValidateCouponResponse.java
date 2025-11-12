@@ -10,10 +10,10 @@ public record ValidateCouponResponse(
         boolean valid,
 
         @Schema(description = "할인 금액", example = "50000")
-        int discountAmount,
+        long discountAmount,
 
         @Schema(description = "최종 결제 금액 (주문금액 - 할인금액)", example = "100000")
-        int finalAmount,
+        long finalAmount,
 
         @Schema(description = "메시지", example = "쿠폰이 정상적으로 적용되었습니다")
         String message
@@ -21,7 +21,7 @@ public record ValidateCouponResponse(
     /**
      * 유효한 쿠폰 응답 생성
      */
-    public static ValidateCouponResponse valid(int orderAmount, int discountAmount) {
+    public static ValidateCouponResponse valid(int orderAmount, long discountAmount) {
         return new ValidateCouponResponse(
                 true,
                 discountAmount,

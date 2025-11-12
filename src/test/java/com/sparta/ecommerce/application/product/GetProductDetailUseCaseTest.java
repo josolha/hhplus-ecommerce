@@ -1,8 +1,8 @@
 package com.sparta.ecommerce.application.product;
 
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
+import com.sparta.ecommerce.domain.product.entity.Product;
+import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import com.sparta.ecommerce.domain.product.vo.Stock;
 import org.junit.jupiter.api.BeforeEach;

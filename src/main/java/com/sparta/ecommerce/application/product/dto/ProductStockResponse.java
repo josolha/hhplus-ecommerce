@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.application.product.dto;
 
-import com.sparta.ecommerce.domain.product.Product;
+import com.sparta.ecommerce.domain.product.entity.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record ProductStockResponse(

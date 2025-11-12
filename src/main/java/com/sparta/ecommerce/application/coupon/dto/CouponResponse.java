@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.application.coupon.dto;
 
-import com.sparta.ecommerce.domain.coupon.Coupon;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -20,7 +20,7 @@ public record CouponResponse(
         DiscountType discountType,
 
         @Schema(description = "할인 값 (FIXED: 금액, PERCENT: 퍼센트)", example = "50000")
-        int discountValue,
+        long discountValue,
 
         @Schema(description = "총 발급 수량", example = "100")
         int totalQuantity,
@@ -29,7 +29,7 @@ public record CouponResponse(
         int remainingQuantity,
 
         @Schema(description = "최소 주문 금액", example = "100000")
-        int minOrderAmount,
+        long minOrderAmount,
 
         @Schema(description = "만료 일시", example = "2025-12-31T23:59:59")
         LocalDateTime expiresAt

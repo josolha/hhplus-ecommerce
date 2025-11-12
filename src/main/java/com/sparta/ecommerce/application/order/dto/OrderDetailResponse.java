@@ -1,6 +1,7 @@
 package com.sparta.ecommerce.application.order.dto;
 
-import com.sparta.ecommerce.domain.order.Order;
+import com.sparta.ecommerce.domain.order.entity.Order;
+import com.sparta.ecommerce.domain.order.entity.OrderItem;
 import com.sparta.ecommerce.domain.order.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -28,8 +29,8 @@ public record OrderDetailResponse(
         @Schema(description = "주문 생성 일시", example = "2025-11-06T22:00:00")
         LocalDateTime createdAt
 ) {
-    public static OrderDetailResponse from(Order order) {
-        List<OrderItemResponse> itemResponses = order.getItems().stream()
+    public static OrderDetailResponse from(Order order, List<OrderItem> orderItems) {
+        List<OrderItemResponse> itemResponses = orderItems.stream()
                 .map(OrderItemResponse::from)
                 .toList();
 
@@ -39,7 +40,7 @@ public record OrderDetailResponse(
                 order.getTotalAmount(),
                 order.getDiscountAmount(),
                 order.getFinalAmount(),
-                order.getCouponId(),
+                order.getUserCouponId(),
                 order.getStatus(),
                 order.getCreatedAt()
         );
