@@ -36,5 +36,7 @@ out/
 ### VS Code ###
 .vscode/
 
-# application 제외
-application*
+# application 설정 파일 제외 (예제 파일은 포함)
+application.yml
+application-*.yml
+!application*.example

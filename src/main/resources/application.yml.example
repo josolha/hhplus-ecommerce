@@ -5,9 +5,9 @@ spring:
     active: local
 
   datasource:
-    url: jdbc:mysql://localhost:3306/ecommerce?serverTimezone=Asia/Seoul
-    username: root
-    password: wh&2014thfgk1
+    url: ${DB_URL:jdbc:mysql://localhost:3306/ecommerce?serverTimezone=Asia/Seoul}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD}  # 환경변수로 설정 필요
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
