@@ -26,6 +26,7 @@ import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.exception.InsufficientBalanceException;
 import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +53,7 @@ public class CreateOrderUseCase {
      * @param request 주문 요청
      * @return 주문 결과
      */
+    @Transactional
     public OrderResponse execute(CreateOrderRequest request) {
         String userId = request.userId();
         String couponId = request.couponId();
@@ -150,9 +152,7 @@ public class CreateOrderUseCase {
         }
 
         // 6. 주문 생성
-        String orderId = "ORD" + UUID.randomUUID().toString().substring(0, 12).toUpperCase();
         Order order = Order.builder()
-                .orderId(orderId)
                 .userId(userId)
                 .totalAmount(totalAmount)
                 .discountAmount(discountAmount)
