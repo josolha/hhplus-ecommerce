@@ -35,6 +35,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
      * @param startDate 조회 시작 날짜 (최근 N일 계산)
      * @param limit 조회할 상품 개수
      * @return 인기 상품 목록 (판매량 포함)
+     *
+     *  1순위: 판매량
+     *  2순위: 최근에 더 많이 팔린 상품
+     *  3순위: 상품 생성일 (최근 등록 상품 우선)
      */
     @Query("""
         SELECT new com.sparta.ecommerce.application.product.dto.PopularProductResponse(
@@ -50,8 +54,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
         JOIN Product p ON oi.productId = p.productId
         WHERE o.createdAt >= :startDate
           AND o.status = 'COMPLETED'
-        GROUP BY p.productId, p.name, p.price, p.stock.quantity, p.category
-        ORDER BY SUM(oi.quantity) DESC
+        GROUP BY p.productId, p.name, p.price, p.stock.quantity, p.category, p.createdAt
+        ORDER BY SUM(oi.quantity) DESC, MAX(o.createdAt) DESC, p.createdAt DESC
         LIMIT :limit
         """)
     List<PopularProductResponse> findPopularProducts(@Param("startDate") LocalDateTime startDate,
