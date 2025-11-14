@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -20,7 +21,10 @@ import java.time.LocalDateTime;
  * 사용자별 쿠폰 발급 이력 엔티티
  */
 @Entity
-@Table(name = "user_coupons")
+@Table(name = "user_coupons", indexes = {
+        @Index(name = "idx_user_coupons_user_coupon", columnList = "user_id, coupon_id"),
+        @Index(name = "idx_user_coupons_user_id", columnList = "user_id")
+})
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
