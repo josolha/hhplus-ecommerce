@@ -1,8 +1,9 @@
 package com.sparta.ecommerce.application.coupon;
 
 import com.sparta.ecommerce.application.coupon.dto.CouponResponse;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,7 @@ public class GetAvailableCouponsUseCase {
      * - 만료되지 않은 쿠폰만 반환
      */
     public List<CouponResponse> execute() {
-        List<Coupon> availableCoupons = couponRepository.findAvailableCoupons();
+        List<Coupon> availableCoupons = couponRepository.findAvailableCoupons(LocalDateTime.now());
 
         return availableCoupons.stream()
                 .map(CouponResponse::from)

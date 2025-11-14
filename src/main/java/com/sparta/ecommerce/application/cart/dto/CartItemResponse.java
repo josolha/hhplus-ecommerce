@@ -1,7 +1,7 @@
 package com.sparta.ecommerce.application.cart.dto;
 
-import com.sparta.ecommerce.domain.cart.CartItem;
-import com.sparta.ecommerce.domain.product.Product;
+import com.sparta.ecommerce.domain.cart.entity.CartItem;
+import com.sparta.ecommerce.domain.product.entity.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

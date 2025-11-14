@@ -2,10 +2,14 @@ package com.sparta.ecommerce.application.order;
 
 import com.sparta.ecommerce.application.order.dto.OrderListResponse;
 import com.sparta.ecommerce.application.order.dto.OrderSummaryResponse;
-import com.sparta.ecommerce.domain.order.Order;
-import com.sparta.ecommerce.domain.order.OrderRepository;
+import com.sparta.ecommerce.domain.order.entity.Order;
+import com.sparta.ecommerce.domain.order.repository.OrderRepository;
 import com.sparta.ecommerce.domain.order.OrderStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,33 +33,28 @@ public class GetOrdersUseCase {
      * @return 페이징된 주문 목록
      */
     public OrderListResponse execute(String userId, int page, int limit, String status) {
-        // 주문 조회
-        List<Order> orders;
+        // Pageable 생성 (page는 0부터 시작하므로 -1, 최신순 정렬)
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
+
+        // DB에서 페이징 처리된 데이터 조회
+        Page<Order> orderPage;
         if (status != null && !status.isEmpty()) {
             OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-            orders = orderRepository.findByUserIdAndStatus(userId, orderStatus);
+            orderPage = orderRepository.findByUserIdAndStatus(userId, orderStatus, pageable);
         } else {
-            orders = orderRepository.findByUserId(userId);
+            orderPage = orderRepository.findByUserId(userId, pageable);
         }
 
-        // 페이징 계산
-        int totalCount = orders.size();
-        int totalPages = (int) Math.ceil((double) totalCount / limit);
-        int startIndex = (page - 1) * limit;
-        int endIndex = Math.min(startIndex + limit, totalCount);
-
-        // 현재 페이지 데이터 추출
-        List<OrderSummaryResponse> orderSummaries = orders.stream()
-                .skip(startIndex)
-                .limit(limit)
+        // DTO 변환
+        List<OrderSummaryResponse> orderSummaries = orderPage.getContent().stream()
                 .map(OrderSummaryResponse::from)
                 .toList();
 
         return new OrderListResponse(
                 orderSummaries,
                 page,
-                totalPages,
-                totalCount
+                orderPage.getTotalPages(),
+                (int) orderPage.getTotalElements()
         );
     }
 }

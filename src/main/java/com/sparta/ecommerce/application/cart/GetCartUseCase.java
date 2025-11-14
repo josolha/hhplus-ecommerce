@@ -2,15 +2,16 @@ package com.sparta.ecommerce.application.cart;
 
 import com.sparta.ecommerce.application.cart.dto.CartItemResponse;
 import com.sparta.ecommerce.application.cart.dto.CartResponse;
-import com.sparta.ecommerce.domain.cart.Cart;
-import com.sparta.ecommerce.domain.cart.CartRepository;
-import com.sparta.ecommerce.domain.product.Product;
-import com.sparta.ecommerce.domain.product.ProductRepository;
+import com.sparta.ecommerce.domain.cart.entity.Cart;
+import com.sparta.ecommerce.domain.cart.entity.CartItem;
+import com.sparta.ecommerce.domain.cart.repository.CartRepository;
+import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;
+import com.sparta.ecommerce.domain.product.entity.Product;
+import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,6 +22,7 @@ import java.util.List;
 public class GetCartUseCase {
 
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
 
     /**
@@ -33,8 +35,11 @@ public class GetCartUseCase {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> createEmptyCart(userId));
 
-        // 2. 각 항목에 대한 상품 정보 조회하여 응답 생성
-        List<CartItemResponse> itemResponses = cart.getItems().stream()
+        // 2. 장바구니 아이템 조회
+        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getCartId());
+
+        // 3. 각 항목에 대한 상품 정보 조회하여 응답 생성
+        List<CartItemResponse> itemResponses = cartItems.stream()
                 .map(cartItem -> {
                     Product product = productRepository.findById(cartItem.getProductId())
                             .orElseThrow(() -> new ProductNotFoundException(cartItem.getProductId()));
@@ -42,7 +47,7 @@ public class GetCartUseCase {
                 })
                 .toList();
 
-        // 3. 응답 생성
+        // 4. 응답 생성
         return CartResponse.of(cart.getCartId(), cart.getUserId(), itemResponses);
     }
 
@@ -53,7 +58,6 @@ public class GetCartUseCase {
         return Cart.builder()
                 .cartId("CART_" + userId)
                 .userId(userId)
-                .items(new ArrayList<>())
                 .build();
     }
 }

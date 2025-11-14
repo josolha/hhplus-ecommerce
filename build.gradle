@@ -25,13 +25,46 @@ repositories {
 }
 
 dependencies {
+	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// Database
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	runtimeOnly 'com.h2database:h2' // 테스트용
+
+	// Redis (쿠폰 동시성 제어, 인기 상품 캐싱)
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// API Documentation
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	//JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// MySQL (운영용)
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// H2 (테스트용 - 선택)
+	runtimeOnly 'com.h2database:h2'
+
+	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Testcontainers 추가
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers:1.19.3'
+	testImplementation 'org.testcontainers:mysql:1.19.3'
+	testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+
+	// 더미 데이터 생성용
+	testImplementation 'net.datafaker:datafaker:2.0.1'
 }
 
 tasks.named('test') {

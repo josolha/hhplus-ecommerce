@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.application.order.dto;
 
-import com.sparta.ecommerce.domain.order.OrderItem;
+import com.sparta.ecommerce.domain.order.entity.OrderItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record OrderItemResponse(
@@ -19,7 +19,7 @@ public record OrderItemResponse(
         return new OrderItemResponse(
                 orderItem.getProductId(),
                 orderItem.getProductName(),
-                orderItem.getPrice(),
+                orderItem.getUnitPrice(),
                 orderItem.getQuantity(),
                 orderItem.getSubtotal()
         );

@@ -2,8 +2,8 @@ package com.sparta.ecommerce.application.coupon;
 
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponResponse;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
 import com.sparta.ecommerce.domain.coupon.exception.InvalidCouponException;
 import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
@@ -46,10 +46,10 @@ class ValidateCouponUseCaseTest {
                 .name("5만원 할인 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(50000)
-                .stock(new CouponStock(100, 50))
+                .stock(new CouponStock(100, 50, 50))
                 .minOrderAmount(100000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
+                
                 .build();
 
         given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
@@ -78,10 +78,10 @@ class ValidateCouponUseCaseTest {
                 .name("10% 할인 쿠폰")
                 .discountType(DiscountType.PERCENT)
                 .discountValue(10)
-                .stock(new CouponStock(200, 150))
+                .stock(new CouponStock(200, 50, 150))
                 .minOrderAmount(50000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
+                
                 .build();
 
         given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
@@ -122,10 +122,9 @@ class ValidateCouponUseCaseTest {
                 .name("만료된 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(50000)
-                .stock(new CouponStock(100, 50))
+                .stock(new CouponStock(100, 50, 50))
                 .minOrderAmount(50000)
                 .expiresAt(LocalDateTime.now().minusDays(1)) // 어제 만료
-                .createdAt(LocalDateTime.now().minusMonths(1))
                 .build();
 
         given(couponRepository.findById(couponId)).willReturn(Optional.of(expiredCoupon));
@@ -153,10 +152,10 @@ class ValidateCouponUseCaseTest {
                 .name("5만원 할인 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(50000)
-                .stock(new CouponStock(100, 50))
+                .stock(new CouponStock(100, 50, 50))
                 .minOrderAmount(100000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
+                
                 .build();
 
         given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
@@ -185,10 +184,10 @@ class ValidateCouponUseCaseTest {
                 .name("5만원 할인 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(50000)
-                .stock(new CouponStock(100, 50))
+                .stock(new CouponStock(100, 50, 50))
                 .minOrderAmount(100000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
+                
                 .build();
 
         given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));

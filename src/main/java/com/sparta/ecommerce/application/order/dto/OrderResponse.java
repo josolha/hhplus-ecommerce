@@ -1,7 +1,7 @@
 package com.sparta.ecommerce.application.order.dto;
 
-import com.sparta.ecommerce.domain.order.Order;
-import com.sparta.ecommerce.domain.order.OrderStatus;
+import com.sparta.ecommerce.domain.order.entity.Order;
+import com.sparta.ecommerce.domain.order.entity.OrderItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -23,8 +23,8 @@ public record OrderResponse(
         @Schema(description = "주문 생성 일시", example = "2025-11-06T22:00:00")
         LocalDateTime createdAt
 ) {
-    public static OrderResponse from(Order order, long remainingBalance) {
-        List<OrderItemResponse> itemResponses = order.getItems().stream()
+    public static OrderResponse from(Order order, List<OrderItem> orderItems, long remainingBalance) {
+        List<OrderItemResponse> itemResponses = orderItems.stream()
                 .map(OrderItemResponse::from)
                 .toList();
 

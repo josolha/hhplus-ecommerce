@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.application.user.dto;
 
-import com.sparta.ecommerce.domain.user.User;
+import com.sparta.ecommerce.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 public record UserBalanceResponse(

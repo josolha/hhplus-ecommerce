@@ -1,13 +1,22 @@
 package com.sparta.ecommerce.domain.coupon.vo;
 
 import com.sparta.ecommerce.domain.coupon.exception.CouponSoldOutException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 /**
  * 쿠폰 재고 Value Object
- * 쿠폰의 총 수량과 남은 수량을 관리하고, 발급 관련 비즈니스 로직을 캡슐화
+ * 쿠폰의 총 수량, 발급된 수량, 남은 수량을 관리하고, 발급 관련 비즈니스 로직을 캡슐화
  */
+@Embeddable
 public record CouponStock(
+        @Column(name = "total_quantity", nullable = false)
         int totalQuantity,
+
+        @Column(name = "issued_quantity", nullable = false)
+        int issuedQuantity,
+
+        @Column(name = "remaining_quantity", nullable = false)
         int remainingQuantity
 ) {
 
@@ -18,11 +27,14 @@ public record CouponStock(
         if (totalQuantity < 0) {
             throw new IllegalArgumentException("총 수량은 음수일 수 없습니다");
         }
+        if (issuedQuantity < 0) {
+            throw new IllegalArgumentException("발급된 수량은 음수일 수 없습니다");
+        }
         if (remainingQuantity < 0) {
             throw new IllegalArgumentException("남은 수량은 음수일 수 없습니다");
         }
-        if (remainingQuantity > totalQuantity) {
-            throw new IllegalArgumentException("남은 수량은 총 수량보다 클 수 없습니다");
+        if (issuedQuantity + remainingQuantity != totalQuantity) {
+            throw new IllegalArgumentException("발급된 수량 + 남은 수량 = 총 수량이어야 합니다");
         }
     }
 
@@ -35,7 +47,11 @@ public record CouponStock(
         if (isOutOfStock()) {
             throw new CouponSoldOutException("쿠폰이 모두 소진되었습니다");
         }
-        return new CouponStock(this.totalQuantity, this.remainingQuantity - 1);
+        return new CouponStock(
+                this.totalQuantity,
+                this.issuedQuantity + 1,
+                this.remainingQuantity - 1
+        );
     }
 
     /**
@@ -62,15 +78,6 @@ public record CouponStock(
         if (totalQuantity == 0) {
             return 0.0;
         }
-        int issuedQuantity = totalQuantity - remainingQuantity;
         return (double) issuedQuantity / totalQuantity * 100.0;
-    }
-
-    /**
-     * 발급된 수량
-     * @return 발급된 수량
-     */
-    public int getIssuedQuantity() {
-        return totalQuantity - remainingQuantity;
     }
 }

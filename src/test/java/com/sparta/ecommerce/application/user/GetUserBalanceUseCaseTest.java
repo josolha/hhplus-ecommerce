@@ -2,11 +2,10 @@ package com.sparta.ecommerce.application.user;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.*;
 
 import com.sparta.ecommerce.application.user.dto.UserBalanceResponse;
-import com.sparta.ecommerce.domain.user.User;
-import com.sparta.ecommerce.domain.user.UserRepository;
+import com.sparta.ecommerce.domain.user.entity.User;
+import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
 import com.sparta.ecommerce.domain.user.vo.Balance;
 import java.util.Optional;
@@ -38,7 +37,7 @@ class GetUserBalanceUseCaseTest {
                 .balance(new Balance(100000))
                 .build();
 
-        given(userRepository.findByUserId(userId))
+        given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
         // when
@@ -49,7 +48,7 @@ class GetUserBalanceUseCaseTest {
         assertThat(response.userId()).isEqualTo("U001");
         assertThat(response.balance()).isEqualTo(100000L);
 
-        verify(userRepository, times(1)).findByUserId(userId);
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
@@ -63,7 +62,7 @@ class GetUserBalanceUseCaseTest {
                 .balance(Balance.zero())  // 0원
                 .build();
 
-        given(userRepository.findByUserId(userId))
+        given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
         // when
@@ -74,7 +73,7 @@ class GetUserBalanceUseCaseTest {
         assertThat(response.userId()).isEqualTo("U002");
         assertThat(response.balance()).isEqualTo(0L);
 
-        verify(userRepository, times(1)).findByUserId(userId);
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
@@ -82,7 +81,7 @@ class GetUserBalanceUseCaseTest {
     void 사용자_없음_예외() {
         // given
         String userId = "INVALID_USER";
-        given(userRepository.findByUserId(userId))
+        given(userRepository.findById(userId))
                 .willReturn(Optional.empty());
 
         // when & then
@@ -90,6 +89,6 @@ class GetUserBalanceUseCaseTest {
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining("사용자를 찾을 수 없습니다");
 
-        verify(userRepository, times(1)).findByUserId(userId);
+        verify(userRepository, times(1)).findById(userId);
     }
 }

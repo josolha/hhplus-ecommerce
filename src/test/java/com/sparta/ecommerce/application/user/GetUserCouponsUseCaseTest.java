@@ -1,12 +1,12 @@
 package com.sparta.ecommerce.application.user;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.CouponStatus;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
-import com.sparta.ecommerce.domain.coupon.UserCoupon;
-import com.sparta.ecommerce.domain.coupon.UserCouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.UserCoupon;
+import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,10 +67,9 @@ class GetUserCouponsUseCaseTest {
                 .name("5만원 할인 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(50000)
-                .stock(new CouponStock(100, 50))
+                .stock(new CouponStock(100, 50, 50))
                 .minOrderAmount(100000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
                 .build();
 
         Coupon coupon2 = Coupon.builder()
@@ -78,10 +77,9 @@ class GetUserCouponsUseCaseTest {
                 .name("10% 할인 쿠폰")
                 .discountType(DiscountType.PERCENT)
                 .discountValue(10)
-                .stock(new CouponStock(200, 150))
+                .stock(new CouponStock(200, 150, 50))
                 .minOrderAmount(50000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
                 .build();
 
         given(userCouponRepository.findByUserId(userId)).willReturn(List.of(userCoupon1, userCoupon2));
@@ -128,10 +126,9 @@ class GetUserCouponsUseCaseTest {
                 .name("사용 가능한 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(50000)
-                .stock(new CouponStock(100, 50))
+                .stock(new CouponStock(100, 50, 50))
                 .minOrderAmount(100000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
                 .build();
 
         Coupon coupon2 = Coupon.builder()
@@ -139,10 +136,9 @@ class GetUserCouponsUseCaseTest {
                 .name("사용한 쿠폰")
                 .discountType(DiscountType.PERCENT)
                 .discountValue(10)
-                .stock(new CouponStock(200, 150))
+                .stock(new CouponStock(200, 150, 50))
                 .minOrderAmount(50000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
                 .build();
 
         given(userCouponRepository.findByUserId(userId)).willReturn(List.of(availableCoupon, usedCoupon));
@@ -186,10 +182,9 @@ class GetUserCouponsUseCaseTest {
                 .name("사용한 쿠폰")
                 .discountType(DiscountType.PERCENT)
                 .discountValue(10)
-                .stock(new CouponStock(200, 150))
+                .stock(new CouponStock(200, 150, 50))
                 .minOrderAmount(50000)
                 .expiresAt(LocalDateTime.now().plusMonths(1))
-                .createdAt(LocalDateTime.now())
                 .build();
 
         given(userCouponRepository.findByUserId(userId)).willReturn(List.of(usedCoupon, availableCoupon));
@@ -233,10 +228,9 @@ class GetUserCouponsUseCaseTest {
                 .name("만료된 쿠폰")
                 .discountType(DiscountType.FIXED)
                 .discountValue(30000)
-                .stock(new CouponStock(50, 10))
+                .stock(new CouponStock(50, 10, 40))
                 .minOrderAmount(50000)
                 .expiresAt(LocalDateTime.now().minusDays(1))
-                .createdAt(LocalDateTime.now().minusMonths(2))
                 .build();
 
         given(userCouponRepository.findByUserId(userId)).willReturn(List.of(expiredCoupon, availableCoupon));

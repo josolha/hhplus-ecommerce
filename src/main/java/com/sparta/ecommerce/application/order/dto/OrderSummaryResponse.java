@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.application.order.dto;
 
-import com.sparta.ecommerce.domain.order.Order;
+import com.sparta.ecommerce.domain.order.entity.Order;
 import com.sparta.ecommerce.domain.order.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 

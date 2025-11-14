@@ -2,8 +2,8 @@ package com.sparta.ecommerce.application.coupon;
 
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponResponse;
-import com.sparta.ecommerce.domain.coupon.Coupon;
-import com.sparta.ecommerce.domain.coupon.CouponRepository;
+import com.sparta.ecommerce.domain.coupon.entity.Coupon;
+import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.exception.InvalidCouponException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,7 @@ public class ValidateCouponUseCase {
         }
 
         // 4. 할인 금액 계산
-        int discountAmount = coupon.calculateDiscountAmount(request.orderAmount());
+        long discountAmount = coupon.calculateDiscountAmount(request.orderAmount());
 
         // 5. 검증 성공 응답
         return ValidateCouponResponse.valid(request.orderAmount(), discountAmount);

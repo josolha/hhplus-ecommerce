@@ -1,12 +1,20 @@
 package com.sparta.ecommerce.domain.product.vo;
 
 import com.sparta.ecommerce.domain.product.exception.InsufficientStockException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
 
 /**
  * 재고 Value Object
  * 재고 수량과 관련된 비즈니스 로직을 캡슐화
  */
-public record Stock(int quantity) {
+
+@Embeddable
+public record Stock(
+        @Column(name = "stock", nullable = false)
+        int quantity
+) {
 
     /**
      * Compact constructor - 유효성 검증

@@ -10,28 +10,24 @@ Project ecommerce {
 Table users {
   id varchar [pk]
   name varchar [not null]
-  email varchar [unique, not null]
-  balance decimal(10,2) [default: 0, not null] // 잔액
+  balance bigint [default: 0, not null] // 잔액 (원 단위, long 타입)
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
-
-  indexes {
-    (email)
-  }
 }
 
 // 잔액 충전 이력
 Table balance_history {
   id varchar [pk]
   user_id varchar [ref: > users.id, not null]
-  amount decimal(10,2) [not null] // 충전 금액
-  previous_balance decimal(10,2) [not null] // 충전 전 잔액
-  current_balance decimal(10,2) [not null] // 충전 후 잔액
+  amount bigint [not null] // 충전 금액 (원 단위, long 타입)
+  previous_balance bigint [not null] // 충전 전 잔액
+  current_balance bigint [not null] // 충전 후 잔액
   payment_method varchar // 카드, 계좌이체 등
   charged_at timestamp [default: `now()`]
 
   indexes {
     (user_id, charged_at)
+    (user_id)
   }
 }
 
@@ -40,8 +36,8 @@ Table products {
   id varchar [pk]
   name varchar [not null]
   description text
-  price decimal(10,2) [not null]
-  stock int [default: 0, not null]
+  price bigint [not null] // 가격 (원 단위, long 타입)
+  quantity int [default: 0, not null]
   category varchar
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
@@ -53,17 +49,29 @@ Table products {
 }
 
 // 장바구니
-Table cart_items {
+Table carts {
   id varchar [pk]
   user_id varchar [ref: > users.id, not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (user_id) [unique] // 사용자당 장바구니 1개
+  }
+}
+
+// 장바구니 항목
+Table cart_items {
+  id varchar [pk]
+  cart_id varchar [ref: > carts.id, not null]
   product_id varchar [ref: > products.id, not null]
   quantity int [not null]
   added_at timestamp [default: `now()`]
 
   indexes {
-    (user_id)
+    (cart_id)
     (product_id)
-    (user_id, product_id) [unique]
+    (cart_id, product_id) [unique] // 같은 장바구니에 동일 상품 중복 방지
   }
 }
 
@@ -72,15 +80,18 @@ Table coupons {
   id varchar [pk]
   name varchar [not null]
   discount_type varchar [not null] // percentage, fixed
-  discount_value decimal(10,2) [not null] // 10% = 10, 5000원 = 5000
-  max_quantity int [not null] // 최대 발급 수량
+  discount_value bigint [not null] // 10% = 10, 5000원 = 5000 (long 타입)
+  total_quantity int [not null] // 총 발급 가능 수량
   issued_quantity int [default: 0, not null] // 발급된 수량
-  remaining_quantity int [not null] // 남은 수량
+  remaining_quantity int [not null] // 남은 수량 (성능 최적화)
+  min_order_amount bigint [not null] // 최소 주문 금액
   expires_at timestamp [not null]
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
 
   indexes {
     (expires_at)
+    (remaining_quantity) // 선착순 발급 체크용
   }
 }
 
@@ -106,16 +117,17 @@ Table orders {
   id varchar [pk]
   user_id varchar [ref: > users.id, not null]
   user_coupon_id varchar [ref: > user_coupons.id, null] // 사용된 쿠폰
-  total_amount decimal(10,2) [not null] // 총 금액
-  discount_amount decimal(10,2) [default: 0, not null] // 할인 금액
-  final_amount decimal(10,2) [not null] // 최종 결제 금액
-  status varchar [default: 'PENDING', not null] // PENDING, PAID, CANCELLED
+  total_amount bigint [not null] // 총 금액 (원 단위, long 타입)
+  discount_amount bigint [default: 0, not null] // 할인 금액
+  final_amount bigint [not null] // 최종 결제 금액
+  status varchar [default: 'PENDING', not null] // PENDING, COMPLETED, CANCELLED
   created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
   paid_at timestamp [null]
 
   indexes {
-    (user_id, status)
-    (created_at)
+    (user_id, created_at)
+    (status)
     (paid_at)
   }
 }
@@ -127,12 +139,32 @@ Table order_items {
   product_id varchar [ref: > products.id, not null]
   product_name varchar [not null] // 주문 당시 상품명 (스냅샷)
   quantity int [not null]
-  unit_price decimal(10,2) [not null] // 주문 당시 단가 (스냅샷)
-  subtotal decimal(10,2) [not null] // 소계
+  unit_price bigint [not null] // 주문 당시 단가 (스냅샷, long 타입)
+  subtotal bigint [not null] // 소계
+  created_at timestamp [default: `now()`]
 
   indexes {
     (order_id)
     (product_id)
+  }
+}
+
+// 결제 정보
+Table payments {
+  id varchar [pk]
+  order_id varchar [ref: - orders.id, not null] // 1:1 관계
+  user_id varchar [ref: > users.id, not null]
+  amount bigint [not null] // 결제 금액 (원 단위, long 타입)
+  payment_method varchar [default: 'balance', not null] // balance, card, transfer 등
+  status varchar [default: 'completed', not null] // completed, failed, refunded
+  paid_at timestamp [default: `now()`]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (order_id) [unique]
+    (user_id, paid_at)
+    (status)
   }
 }
 

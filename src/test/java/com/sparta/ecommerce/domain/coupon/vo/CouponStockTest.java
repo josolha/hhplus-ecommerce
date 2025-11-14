@@ -17,7 +17,7 @@ class CouponStockTest {
     @DisplayName("유효한 재고로 CouponStock을 생성한다")
     void 유효한_재고_생성() {
         // given & when
-        CouponStock stock = new CouponStock(100, 50);
+        CouponStock stock = new CouponStock(100, 50, 50);
 
         // then
         assertThat(stock.totalQuantity()).isEqualTo(100);
@@ -28,7 +28,7 @@ class CouponStockTest {
     @DisplayName("총 수량이 음수면 예외가 발생한다")
     void 총수량_음수_검증() {
         // when & then
-        assertThatThrownBy(() -> new CouponStock(-1, 0))
+        assertThatThrownBy(() -> new CouponStock(-1, 0, 0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("총 수량은 음수일 수 없습니다");
     }
@@ -37,7 +37,7 @@ class CouponStockTest {
     @DisplayName("남은 수량이 음수면 예외가 발생한다")
     void 남은수량_음수_검증() {
         // when & then
-        assertThatThrownBy(() -> new CouponStock(100, -1))
+        assertThatThrownBy(() -> new CouponStock(100, 0, -1))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("남은 수량은 음수일 수 없습니다");
     }
@@ -46,16 +46,16 @@ class CouponStockTest {
     @DisplayName("남은 수량이 총 수량보다 크면 예외가 발생한다")
     void 남은수량_총수량_초과_검증() {
         // when & then
-        assertThatThrownBy(() -> new CouponStock(100, 150))
+        assertThatThrownBy(() -> new CouponStock(100, 0, 150))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("남은 수량은 총 수량보다 클 수 없습니다");
+                .hasMessage("남은 수량은 음수일 수 없습니다");
     }
 
     @Test
     @DisplayName("쿠폰을 발급하면 남은 수량이 1 감소한다")
     void 쿠폰_발급_성공() {
         // given
-        CouponStock stock = new CouponStock(100, 50);
+        CouponStock stock = new CouponStock(100, 50, 50);
 
         // when
         CouponStock issuedStock = stock.issue();
@@ -70,7 +70,7 @@ class CouponStockTest {
     @DisplayName("재고가 0이면 발급 시 예외가 발생한다")
     void 재고_소진_시_발급_실패() {
         // given
-        CouponStock stock = new CouponStock(100, 0);
+        CouponStock stock = new CouponStock(100, 100, 0);
 
         // when & then
         assertThatThrownBy(stock::issue)
@@ -82,7 +82,7 @@ class CouponStockTest {
     @DisplayName("재고가 있으면 hasStock이 true를 반환한다")
     void 재고_있음() {
         // given
-        CouponStock stock = new CouponStock(100, 50);
+        CouponStock stock = new CouponStock(100, 50, 50);
 
         // when & then
         assertThat(stock.hasStock()).isTrue();
@@ -92,7 +92,7 @@ class CouponStockTest {
     @DisplayName("재고가 0이면 hasStock이 false를 반환한다")
     void 재고_없음() {
         // given
-        CouponStock stock = new CouponStock(100, 0);
+        CouponStock stock = new CouponStock(100, 100, 0);
 
         // when & then
         assertThat(stock.hasStock()).isFalse();
@@ -102,7 +102,7 @@ class CouponStockTest {
     @DisplayName("재고가 0이면 isOutOfStock이 true를 반환한다")
     void 재고_소진_확인() {
         // given
-        CouponStock stock = new CouponStock(100, 0);
+        CouponStock stock = new CouponStock(100, 100, 0);
 
         // when & then
         assertThat(stock.isOutOfStock()).isTrue();
@@ -112,7 +112,7 @@ class CouponStockTest {
     @DisplayName("재고가 있으면 isOutOfStock이 false를 반환한다")
     void 재고_남음_확인() {
         // given
-        CouponStock stock = new CouponStock(100, 50);
+        CouponStock stock = new CouponStock(100, 50, 50);
 
         // when & then
         assertThat(stock.isOutOfStock()).isFalse();
@@ -122,7 +122,7 @@ class CouponStockTest {
     @DisplayName("발급률을 정확하게 계산한다")
     void 발급률_계산() {
         // given
-        CouponStock stock = new CouponStock(100, 50);
+        CouponStock stock = new CouponStock(100, 50, 50);
 
         // when
         double issuanceRate = stock.getIssuanceRate();
@@ -135,7 +135,7 @@ class CouponStockTest {
     @DisplayName("모두 발급되면 발급률이 100%이다")
     void 발급률_100퍼센트() {
         // given
-        CouponStock stock = new CouponStock(100, 0);
+        CouponStock stock = new CouponStock(100, 100, 0);
 
         // when
         double issuanceRate = stock.getIssuanceRate();
@@ -148,7 +148,7 @@ class CouponStockTest {
     @DisplayName("하나도 발급되지 않으면 발급률이 0%이다")
     void 발급률_0퍼센트() {
         // given
-        CouponStock stock = new CouponStock(100, 100);
+        CouponStock stock = new CouponStock(100, 0, 100);
 
         // when
         double issuanceRate = stock.getIssuanceRate();
@@ -161,7 +161,7 @@ class CouponStockTest {
     @DisplayName("총 수량이 0이면 발급률이 0%이다")
     void 총수량_0일때_발급률() {
         // given
-        CouponStock stock = new CouponStock(0, 0);
+        CouponStock stock = new CouponStock(0, 0, 0);
 
         // when
         double issuanceRate = stock.getIssuanceRate();
@@ -174,10 +174,10 @@ class CouponStockTest {
     @DisplayName("발급된 수량을 정확하게 계산한다")
     void 발급된_수량_계산() {
         // given
-        CouponStock stock = new CouponStock(100, 30);
+        CouponStock stock = new CouponStock(100, 70, 30);
 
         // when
-        int issuedQuantity = stock.getIssuedQuantity();
+        int issuedQuantity = stock.issuedQuantity();
 
         // then
         assertThat(issuedQuantity).isEqualTo(70); // 100 - 30 = 70
@@ -187,7 +187,7 @@ class CouponStockTest {
     @DisplayName("연속으로 발급하면 수량이 순차적으로 감소한다")
     void 연속_발급() {
         // given
-        CouponStock stock = new CouponStock(100, 3);
+        CouponStock stock = new CouponStock(100, 97, 3);
 
         // when
         CouponStock stock1 = stock.issue();

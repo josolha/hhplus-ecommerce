@@ -4,6 +4,7 @@ import com.sparta.ecommerce.application.product.GetProductStockUseCase;
 import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
 import com.sparta.ecommerce.application.product.GetProductsUseCase;
 import com.sparta.ecommerce.application.product.GetPopularProductsUseCase;
+import com.sparta.ecommerce.application.product.dto.PopularProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductStockResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -86,13 +87,13 @@ public class ProductController {
      * 인기 상품 조회 (최근 3일, Top 5)
      * GET /api/products/popular
      */
-    @Operation(summary = "인기 상품 조회", description = "최근 N일간의 인기 상품 Top N을 조회합니다")
+    @Operation(summary = "인기 상품 조회", description = "최근 N일간의 인기 상품 Top N을 조회합니다 (판매량 포함)")
     @GetMapping("/popular")
-    public ResponseEntity<List<ProductResponse>> getPopularProducts(
+    public ResponseEntity<List<PopularProductResponse>> getPopularProducts(
             @Parameter(description = "조회 기간 (일 단위)") @RequestParam(defaultValue = "3") int days,
             @Parameter(description = "조회할 상품 개수") @RequestParam(defaultValue = "5") int limit) {
 
-        List<ProductResponse> products = getPopularProductsUseCase.execute(days, limit);
+        List<PopularProductResponse> products = getPopularProductsUseCase.execute(days, limit);
         return ResponseEntity.ok(products);
     }
 }
