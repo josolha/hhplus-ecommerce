@@ -18,6 +18,7 @@ products: [
     price: number,            // 가격
     stock: number,            // 재고 수량
     category: string          // 카테고리
+    salesCount: number        // 판매량
   }
 ]
 ```
