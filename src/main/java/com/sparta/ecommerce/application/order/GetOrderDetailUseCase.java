@@ -8,6 +8,7 @@ import com.sparta.ecommerce.domain.order.repository.OrderItemRepository;
 import com.sparta.ecommerce.domain.order.exception.OrderNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class GetOrderDetailUseCase {
      * @param orderId 주문 ID
      * @return 주문 상세 정보
      */
+    @Transactional(readOnly = true)
     public OrderDetailResponse execute(String orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));

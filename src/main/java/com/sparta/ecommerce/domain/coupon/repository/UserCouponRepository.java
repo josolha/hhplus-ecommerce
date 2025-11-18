@@ -31,4 +31,9 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, String> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT CASE WHEN COUNT(uc) > 0 THEN true ELSE false END FROM UserCoupon uc WHERE uc.userId = :userId AND uc.couponId = :couponId")
     boolean existsByUserIdAndCouponIdWithLock(@Param("userId") String userId, @Param("couponId") String couponId);
+
+    /**
+     * 쿠폰 ID로 발급된 모든 사용자 쿠폰 조회
+     */
+    List<UserCoupon> findByCouponId(String couponId);
 }

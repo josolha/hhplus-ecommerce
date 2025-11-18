@@ -10,6 +10,7 @@ import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 장바구니 항목 수량 변경 UseCase
@@ -28,6 +29,7 @@ public class UpdateCartItemUseCase {
      * @param request 수량 변경 요청
      * @return 변경된 장바구니 항목 정보
      */
+    @Transactional
     public CartItemResponse execute(String userId, String cartItemId, UpdateCartItemRequest request) {
         // 1. 장바구니 아이템 조회
         CartItem cartItem = cartItemRepository.findById(cartItemId)

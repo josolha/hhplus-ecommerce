@@ -1,15 +1,28 @@
 package com.sparta.ecommerce.domain.product.repository;
 
 import com.sparta.ecommerce.domain.product.entity.Product;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 상품 저장소 인터페이스
  * JpaRepository가 기본 CRUD 메서드 제공 (findById, findAll, save 등)
  */
 public interface ProductRepository extends JpaRepository<Product, String> {
+
+    /**
+     * 상품 조회 (비관적 락)
+     * SELECT FOR UPDATE로 동시성 제어
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Product p WHERE p.productId = :productId")
+    Optional<Product> findByIdWithLock(@Param("productId") String productId);
 
     /**
      * 카테고리로 상품 조회

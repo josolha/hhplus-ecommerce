@@ -6,6 +6,7 @@ import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class GetAvailableCouponsUseCase {
      * - 재고가 남아있고
      * - 만료되지 않은 쿠폰만 반환
      */
+    @Transactional(readOnly = true)
     public List<CouponResponse> execute() {
         List<Coupon> availableCoupons = couponRepository.findAvailableCoupons(LocalDateTime.now());
 

@@ -1,8 +1,12 @@
 package com.sparta.ecommerce.domain.user.repository;
 
 import com.sparta.ecommerce.domain.user.entity.User;
+import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -11,6 +15,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
 
+    /**
+     * 사용자 조회 (비관적 락)
+     * SELECT FOR UPDATE로 동시성 제어
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.userId = :userId")
+    Optional<User> findByIdWithLock(@Param("userId") String userId);
 }
 /*
 public interface UserRepository {
