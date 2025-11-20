@@ -61,9 +61,8 @@ public class UserCoupon {
     /**
      * 쿠폰 발급
      */
-    public static UserCoupon issue(String userCouponId, String userId, Coupon coupon) {
+    public static UserCoupon issue(String userId, Coupon coupon) {
         return UserCoupon.builder()
-                .userCouponId(userCouponId)
                 .userId(userId)
                 .couponId(coupon.getCouponId())
                 .issuedAt(LocalDateTime.now())

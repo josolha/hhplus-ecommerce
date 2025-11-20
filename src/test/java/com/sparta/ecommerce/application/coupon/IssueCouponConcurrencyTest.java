@@ -41,6 +41,70 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * [주의]
  * - 동시성 테스트이므로 @Transactional 제거 (각 스레드가 독립적으로 트랜잭션 실행)
+ *
+ * [대안: Thread + Runnable 방식]
+ * ExecutorService 대신 Thread와 Runnable을 직접 사용하는 방법:
+ *
+ * <pre>
+ * // 방법 1: Thread + Runnable
+ * int threadCount = 100;
+ * CountDownLatch startLatch = new CountDownLatch(1);  // 동시 시작용
+ * CountDownLatch endLatch = new CountDownLatch(threadCount);  // 종료 대기용
+ * AtomicInteger successCount = new AtomicInteger(0);
+ * AtomicInteger failCount = new AtomicInteger(0);
+ *
+ * List<Thread> threads = new ArrayList<>();
+ *
+ * for (int i = 0; i < threadCount; i++) {
+ *     User user = testUsers.get(i);
+ *     Thread thread = new Thread(new Runnable() {
+ *         @Override
+ *         public void run() {
+ *             try {
+ *                 startLatch.await();  // 모든 스레드가 준비될 때까지 대기
+ *                 UserCouponResponse response = issueCouponUseCase.execute(
+ *                         user.getUserId(),
+ *                         limitedCoupon.getCouponId()
+ *                 );
+ *                 successCount.incrementAndGet();
+ *             } catch (Exception e) {
+ *                 failCount.incrementAndGet();
+ *             } finally {
+ *                 endLatch.countDown();
+ *             }
+ *         }
+ *     });
+ *     threads.add(thread);
+ *     thread.start();
+ * }
+ *
+ * startLatch.countDown();  // 모든 스레드 동시 시작!
+ * endLatch.await();  // 모든 스레드 종료 대기
+ *
+ * // 방법 2: Lambda 사용 (더 간결)
+ * for (int i = 0; i < threadCount; i++) {
+ *     User user = testUsers.get(i);
+ *     Thread thread = new Thread(() -> {
+ *         try {
+ *             startLatch.await();
+ *             issueCouponUseCase.execute(user.getUserId(), limitedCoupon.getCouponId());
+ *             successCount.incrementAndGet();
+ *         } catch (Exception e) {
+ *             failCount.incrementAndGet();
+ *         } finally {
+ *             endLatch.countDown();
+ *         }
+ *     });
+ *     thread.start();
+ * }
+ *
+ * startLatch.countDown();
+ * endLatch.await();
+ * </pre>
+ *
+ * [ExecutorService vs Thread 비교]
+ * - ExecutorService: 스레드 풀 재사용, 관리 편함, 권장
+ * - Thread 직접 생성: 스레드 생성/소멸 오버헤드, 교육용으로 적합
  */
 public class IssueCouponConcurrencyTest extends IntegrationTestBase {
 

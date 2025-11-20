@@ -68,6 +68,76 @@ public class DataSeeder {
         printDataCounts();
     }
 
+    @Test
+    @DisplayName("동시성 테스트용 데이터 생성")
+    void seedConcurrencyTestData() {
+        System.out.println("=== 동시성 테스트 데이터 생성 시작 ===");
+
+        seedTestUsers();
+        seedTestCoupon();
+
+        System.out.println("=== 동시성 테스트 데이터 생성 완료 ===");
+    }
+
+    /**
+     * 동시성 테스트용 유저 100명 생성
+     * ID: test-user-001 ~ test-user-100
+     */
+    private void seedTestUsers() {
+        System.out.println("테스트 유저 생성 중...");
+
+        String sql = "INSERT INTO users (id, name, email, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+
+        int testUserCount = 100;
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                String userId = "test-user-" + (i + 1);
+
+                ps.setString(1, userId);
+                ps.setString(2, "테스트유저" + (i + 1));
+                ps.setString(3, "testuser" + (i + 1) + "@test.com");
+                ps.setLong(4, 1_000_000); // 100만원
+                ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return testUserCount;
+            }
+        });
+
+        System.out.printf("테스트 유저 생성 완료: %d건%n", testUserCount);
+    }
+
+    /**
+     * 동시성 테스트용 쿠폰 생성
+     * ID: test-coupon-1, 재고: 10개
+     */
+    private void seedTestCoupon() {
+        System.out.println("테스트 쿠폰 생성 중...");
+
+        String sql = "INSERT INTO coupons (id, name, discount_type, discount_value, total_quantity, issued_quantity, remaining_quantity, min_order_amount, expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        jdbcTemplate.update(sql,
+                "test-coupon-1",
+                "선착순 테스트 쿠폰",
+                "FIXED",
+                1000,
+                10,     // 총 수량
+                0,      // 발급된 수량
+                10,     // 남은 수량
+                0,      // 최소 주문 금액
+                Timestamp.valueOf(LocalDateTime.now().plusDays(30)),
+                Timestamp.valueOf(LocalDateTime.now()),
+                Timestamp.valueOf(LocalDateTime.now())
+        );
+
+        System.out.println("테스트 쿠폰 생성 완료: test-coupon-1 (재고 10개)");
+    }
+
     /**
      * 사용자 10,000명 생성
      */
