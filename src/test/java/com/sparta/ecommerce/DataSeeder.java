@@ -73,10 +73,159 @@ public class DataSeeder {
     void seedConcurrencyTestData() {
         System.out.println("=== 동시성 테스트 데이터 생성 시작 ===");
 
-        seedTestUsers();
-        seedTestCoupon();
+        seedTestUsers();           // 테스트 유저 100명
+        seedTestCoupon();          // 선착순 쿠폰 (재고 10개)
+        seedTestProduct();         // 테스트 상품 (재고 10개)
+        seedTestCarts();           // 장바구니 100개
+        seedTestCartItems();       // 장바구니 아이템 100개
+        seedTestUserCoupons();     // 유저별 쿠폰 발급 (주문 테스트용)
 
         System.out.println("=== 동시성 테스트 데이터 생성 완료 ===");
+        printTestDataSummary();
+    }
+
+    /**
+     * 동시성 테스트용 상품 생성
+     * ID: test-product-1, 재고: 10개
+     */
+    private void seedTestProduct() {
+        System.out.println("테스트 상품 생성 중...");
+
+        String sql = "INSERT INTO products (id, name, description, price, stock, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        jdbcTemplate.update(sql,
+                "test-product-1",
+                "동시성 테스트 상품",
+                "재고 10개 테스트용",
+                10000,
+                10,     // 재고 10개
+                "테스트",
+                Timestamp.valueOf(LocalDateTime.now()),
+                Timestamp.valueOf(LocalDateTime.now())
+        );
+
+        System.out.println("테스트 상품 생성 완료: test-product-1 (재고 10개)");
+    }
+
+    /**
+     * 동시성 테스트용 장바구니 100개 생성
+     * ID: test-cart-1 ~ test-cart-100
+     */
+    private void seedTestCarts() {
+        System.out.println("테스트 장바구니 생성 중...");
+
+        String sql = "INSERT INTO carts (id, user_id, created_at, updated_at) VALUES (?, ?, ?, ?)";
+
+        int cartCount = 100;
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                String cartId = "test-cart-" + (i + 1);
+                String userId = "test-user-" + (i + 1);
+
+                ps.setString(1, cartId);
+                ps.setString(2, userId);
+                ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return cartCount;
+            }
+        });
+
+        System.out.printf("테스트 장바구니 생성 완료: %d개%n", cartCount);
+    }
+
+    /**
+     * 동시성 테스트용 장바구니 아이템 100개 생성
+     * 각 장바구니에 test-product-1 상품 1개씩
+     */
+    private void seedTestCartItems() {
+        System.out.println("테스트 장바구니 아이템 생성 중...");
+
+        String sql = "INSERT INTO cart_items (id, cart_id, product_id, quantity, added_at) VALUES (?, ?, ?, ?, ?)";
+
+        int itemCount = 100;
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                String itemId = "test-cart-item-" + (i + 1);
+                String cartId = "test-cart-" + (i + 1);
+
+                ps.setString(1, itemId);
+                ps.setString(2, cartId);
+                ps.setString(3, "test-product-1");
+                ps.setInt(4, 1);
+                ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return itemCount;
+            }
+        });
+
+        System.out.printf("테스트 장바구니 아이템 생성 완료: %d개%n", itemCount);
+    }
+
+    /**
+     * 동시성 테스트용 유저 쿠폰 발급 (주문 시 쿠폰 사용 테스트용)
+     * test-user-1 ~ test-user-10에게 test-coupon-1 발급
+     */
+    private void seedTestUserCoupons() {
+        System.out.println("테스트 유저 쿠폰 발급 중...");
+
+        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)";
+
+        int couponCount = 10;  // 10명에게만 발급
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                String userCouponId = "test-user-coupon-" + (i + 1);
+                String userId = "test-user-" + (i + 1);
+
+                ps.setString(1, userCouponId);
+                ps.setString(2, userId);
+                ps.setString(3, "test-coupon-1");
+                ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setNull(5, java.sql.Types.TIMESTAMP);  // used_at = null
+                ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now().plusDays(30)));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return couponCount;
+            }
+        });
+
+        System.out.printf("테스트 유저 쿠폰 발급 완료: %d명%n", couponCount);
+    }
+
+    /**
+     * 테스트 데이터 요약 출력
+     */
+    private void printTestDataSummary() {
+        System.out.println("\n=== 테스트 데이터 요약 ===");
+        System.out.println("유저: test-user-1 ~ test-user-100 (잔액 100만원)");
+        System.out.println("쿠폰: test-coupon-1 (재고 10개)");
+        System.out.println("상품: test-product-1 (재고 10개, 가격 10,000원)");
+        System.out.println("장바구니: test-cart-1 ~ test-cart-100");
+        System.out.println("장바구니아이템: 각 장바구니에 test-product-1 x 1개");
+        System.out.println("유저쿠폰: test-user-1 ~ test-user-10에게 test-coupon-1 발급");
+        System.out.println("\n=== JMeter 테스트 시나리오 ===");
+        System.out.println("1. 쿠폰 발급: POST /api/coupons/test-coupon-1/issue");
+        System.out.println("   - 100명 동시 요청 → 10명만 성공");
+        System.out.println("2. 주문 (재고): POST /api/orders");
+        System.out.println("   - {\"userId\": \"test-user-${__threadNum}\", \"couponId\": null}");
+        System.out.println("   - 100명 동시 요청 → 10명만 성공 (재고 10개)");
+        System.out.println("3. 주문 (쿠폰): POST /api/orders");
+        System.out.println("   - {\"userId\": \"test-user-${__threadNum}\", \"couponId\": \"test-coupon-1\"}");
+        System.out.println("   - 10명 동시 요청 (쿠폰 있는 유저만)");
     }
 
     /**

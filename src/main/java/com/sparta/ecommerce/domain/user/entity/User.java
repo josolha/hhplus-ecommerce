@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,8 @@ public class User extends BaseEntity {
     @Embedded
     private Balance balance;
 
+    @Version
+    private Long version;
 
     /**
      * 잔액 충전

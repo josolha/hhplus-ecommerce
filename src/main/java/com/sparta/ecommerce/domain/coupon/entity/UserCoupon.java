@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,6 +52,9 @@ public class UserCoupon {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
+    @Version
+    private Long version;
+
     @PrePersist
     protected void onCreate() {
         if (this.issuedAt == null) {
@@ -82,6 +86,7 @@ public class UserCoupon {
                 .issuedAt(this.issuedAt)
                 .usedAt(LocalDateTime.now())
                 .expiresAt(this.expiresAt)
+                .version(this.version)  // 낙관적 락을 위해 version 유지
                 .build();
     }
 

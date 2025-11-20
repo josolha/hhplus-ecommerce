@@ -196,7 +196,6 @@ public class CreateOrderConcurrencyTest extends IntegrationTestBase {
             cartItemRepository.save(cartItem);
         }
 
-        entityManager.flush();
         entityManager.clear();
 
         int threadCount = 100;
