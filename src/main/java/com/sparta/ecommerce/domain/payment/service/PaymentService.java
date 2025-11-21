@@ -75,8 +75,8 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         try {
-            // 2. 사용자 조회 (비관적 락)
-            User user = userRepository.findByIdWithLock(order.getUserId())
+            // 2. 사용자 조회 (낙관적 락 - @Version 사용)
+            User user = userRepository.findById(order.getUserId())
                     .orElseThrow(() -> new PaymentFailedException("사용자를 찾을 수 없습니다"));
 
             // 3. 잔액 확인
@@ -185,7 +185,7 @@ public class PaymentService {
 
         // 잔액 결제인 경우 환불 처리
         if (payment.getMethod() == PaymentMethod.BALANCE) {
-            User user = userRepository.findByIdWithLock(payment.getUserId())
+            User user = userRepository.findById(payment.getUserId())
                     .orElseThrow(() -> new PaymentFailedException("사용자를 찾을 수 없습니다"));
 
             // 잔액 복구

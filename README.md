@@ -1,612 +1,442 @@
-# E-Commerce 인기 상품 조회 쿼리 최적화
+# E-Commerce Core System
 
-> MySQL 인덱스 설계 및 EXPLAIN 분석을 통한 쿼리 성능 개선 (4단계 실험)
+> Spring Boot 기반 이커머스 백엔드 시스템 - 동시성 제어 
 
 ---
 
 ## 📋 목차
 
-- [배경](#-배경)
-- [대상 쿼리](#-대상-쿼리)
-- [최적화 과정](#-최적화-과정)
-  - [1단계: 인덱스 없음](#-1단계-인덱스-없음-초기-상태)
-  - [2단계: orders 인덱스만 추가](#-2단계-orders-테이블에만-인덱스-추가)
-  - [3단계: order_items 인덱스 추가](#-3단계-order_items-인덱스-추가)
-  - [4단계: Covering Index 실험](#-4단계-covering-index-실험)
-- [최종 선택 및 비교](#-최종-선택-및-비교)
-- [핵심 교훈](#-핵심-교훈)
-- [실행 계획 용어 설명](#-실행-계획-용어-설명)
-- [추가 인덱스 설계](#️-추가-인덱스-설계)
+- [동시성 제어 전략](#-동시성-제어-전략)
+  - [전략 개요](#전략-개요)
+  - [상품 재고 - 비관적 락](#1-상품-재고---비관적-락--직접-update-쿼리)
+  - [쿠폰 발급 - 비관적 락](#2-쿠폰-발급---비관적-락--직접-update-쿼리)
+  - [잔액 충전/차감 - 낙관적 락](#3-잔액-충전차감---낙관적-락-version)
+  - [왜 이렇게 설계했는가?](#-왜-이렇게-설계했는가)
+- [쿼리 최적화](#-e-commerce-인기-상품-조회-쿼리-최적화)
 
 ---
 
-## 📌 배경
+## 🔐 동시성 제어 전략
 
-인기 상품 조회 쿼리의 성능 문제를 발견하고, **EXPLAIN/EXPLAIN ANALYZE**를 통해 실행 계획을 분석한 후 인덱스 최적화를 진행했습니다.
+### 전략 개요
 
-**문제 상황:**
-- 최근 3일간 완료된 주문 중 인기 상품 Top 5 조회
-- 초기 실행 시간: **2,930ms** (약 2.93초)
-- 400,000건의 order_items 전체 스캔 발생
+이커머스 시스템에서 동시성 문제가 발생할 수 있는 핵심 영역과 각 영역에 적용한 제어 전략입니다.
 
-**목표:**
-- 실행 계획 분석을 통한 병목 지점 파악
-- 적절한 인덱스 설계로 쿼리 성능 개선
-
----
-
-## 🔍 대상 쿼리
-
-```sql
-SELECT
-    pd.id,
-    pd.name,
-    pd.price,
-    pd.stock,
-    pd.category,
-    SUM(oi.quantity) as total_quantity
-FROM order_items oi
-JOIN orders o ON oi.order_id = o.id
-JOIN products pd ON oi.product_id = pd.id
-WHERE o.created_at >= DATE_SUB(NOW(), INTERVAL 3 DAY)
-  AND o.status = 'COMPLETED'
-GROUP BY pd.id, pd.name, pd.price, pd.stock, pd.category, pd.created_at
-ORDER BY SUM(oi.quantity) DESC, MAX(o.created_at) DESC, pd.created_at DESC
-LIMIT 5;
-```
-
-**쿼리 분석:**
-- 3개 테이블 JOIN (order_items, orders, products)
-- WHERE 조건: 날짜 범위 + 상태 필터
-- GROUP BY + ORDER BY + LIMIT 5
+| 리소스 | 락 유형 | 경합 수준 | 선택 이유 |
+|--------|---------|-----------|-----------|
+| 상품 재고 | 비관적 락 + 직접 UPDATE | 높음 | 다수 사용자가 동일 상품 주문, 재고 정확성 필수 |
+| 쿠폰 재고 | 비관적 락 + 직접 UPDATE | 매우 높음 | 선착순 발급, 초과 발급 방지 필수 |
+| 사용자 잔액 | 낙관적 락 (@Version) | 낮음 | 개인 리소스, 충돌 확률 낮음 |
 
 ---
 
-## 🚀 최적화 과정
+### 1. 상품 재고 - 비관적 락 + 직접 UPDATE 쿼리
 
-### 🔍 1단계: 인덱스 없음 (초기 상태)
+#### 적용 코드
 
-#### 실행 계획 (EXPLAIN)
-```
-id  table  type  rows     Extra
-1   oi     ALL   423,560  Using temporary; Using filesort
-1   pd     eq_ref    1    NULL
-1   o      eq_ref    1    Using where
-```
-
-#### 실제 성능 (EXPLAIN ANALYZE)
-```
--> Table scan on oi (actual time=5.68..638ms, rows=400,000 loops=1)
-   -> Filter: status='COMPLETED' AND created_at>=... (loops=400,000)
-
-Total: 2,930ms (약 2.93초)
-```
-
-#### 문제점
-- ❌ **order_items 전체 스캔**: 400,000건 읽기
-- ❌ **400,000번 필터링**: WHERE 조건을 매번 체크
-- ❌ **비효율적 JOIN 순서**: order_items → products → orders
-
----
-
-### 🔧 2단계: orders 테이블에만 인덱스 추가
-
-#### 추가한 인덱스
-```sql
-CREATE INDEX idx_orders_status_created_at ON orders(status, created_at);
-```
-
-#### 설계 근거
-```
-1. WHERE 절 분석:
-   - status = 'COMPLETED' (등호 조건)
-   - created_at >= 3일전 (범위 조건)
-
-2. 인덱스 컬럼 순서:
-   - status → created_at (등호 먼저, 범위 나중)
-   - MySQL 인덱스 활용 원칙 준수
-
-3. 예상 필터링 효과:
-   - 200,000건 → 12,000건 (94% 감소)
-```
-
-#### 결과
-```
-Total: 4,584ms (❌ 오히려 56% 악화!)
-```
-
-#### 왜 실패했나?
-```
-[실행 계획 변화 없음]
-여전히: order_items → products → orders
-
-[근본 원인]
-- MySQL 옵티마이저가 order_items를 먼저 스캔하는 전략 유지
-- orders의 인덱스가 WHERE 필터링에 사용되지 못함
-- 400,000번의 단건 조회 후 각각 필터링 수행
-
-[교훈]
-단일 테이블 인덱스만으로는 부족!
-JOIN 순서를 바꾸려면 모든 테이블에 인덱스 필요
-```
-
----
-
-### ✅ 3단계: order_items 인덱스 추가
-
-#### 추가한 인덱스
-```sql
--- orders 테이블 (기존)
-CREATE INDEX idx_orders_status_created_at ON orders(status, created_at);
-
--- order_items 테이블 (신규)
-CREATE INDEX idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX idx_order_items_product_id ON order_items(product_id);
-```
-
-#### 설계 근거
-```
-1. JOIN 조건 분석:
-   - JOIN orders o ON oi.order_id = o.id
-   - JOIN products pd ON oi.product_id = pd.id
-   → order_items가 두 테이블과 조인하므로 두 컬럼 모두 인덱스 필요
-
-2. 예상 효과:
-   - MySQL 옵티마이저가 JOIN 순서 변경 가능
-   - orders → order_items → products 순서로 실행
-   - orders의 인덱스가 비로소 활용됨
-```
-
-#### 실행 계획 (EXPLAIN)
-```
-id  table  type   key                           rows   Extra
-1   o      range  idx_orders_status_created_at  24,708 Using where; Using index
-1   oi     ref    idx_order_items_order_id      2      NULL
-1   pd     eq_ref PRIMARY                       1      NULL
-```
-
-✅ **JOIN 순서 변경**: orders → order_items → products
-✅ **모든 테이블에서 인덱스 사용!**
-
-#### 실제 성능 (EXPLAIN ANALYZE)
-```
--> Covering index range scan on o using idx_orders_status_created_at
-   (actual time=0.123..3.58ms, rows=11,992 loops=1)
-   -> Index lookup on oi using idx_order_items_order_id
-      (actual time=0.0595..0.0599ms, rows=2 loops=11,992)
-      -> Single-row index lookup on pd using PRIMARY
-         (actual time=0.00211..0.00213ms, rows=1 loops=23,984)
-
-Total: 840ms (✅ 71.3% 개선!)
-```
-
-#### 개선 사항
-- ✅ **실행 시간**: 2,930ms → 840ms (71.3% 개선, 약 3.5배 빠름)
-- ✅ **처리 데이터**: 400,000건 → 11,992건 (97% 감소)
-- ✅ **필터링 반복**: 400,000번 → 11,992번 (97% 감소)
-- ✅ **Covering Index**: 인덱스만으로 데이터 조회 완료 (디스크 I/O 최소화)
-
----
-
-### 🧪 4단계: Covering Index 실험
-
-#### 가설
-3단계에서 2개 단일 인덱스를 사용했는데, 복합 Covering Index를 사용하면 더 빠를까?
-
-**Covering Index란?**
-- 쿼리에서 필요한 모든 컬럼을 인덱스에 포함
-- 테이블 데이터에 접근하지 않고 인덱스만으로 쿼리 처리
-- EXPLAIN에서 "Using index" 표시
-
-#### 변경한 인덱스
-```sql
--- 3단계 인덱스 제거
-DROP INDEX idx_order_items_order_id ON order_items;
-DROP INDEX idx_order_items_product_id ON order_items;
-
--- Covering Index 생성
-CREATE INDEX idx_order_items_order_id_product_id_quantity
-ON order_items(order_id, product_id, quantity);
-```
-
-#### 설계 근거
-```
-쿼리에서 order_items의 사용 컬럼:
-1. order_id - JOIN 조건
-2. product_id - JOIN 조건
-3. quantity - SUM 집계
-
-→ 3개 컬럼을 모두 인덱스에 포함하면 테이블 접근 불필요!
-
-예상 효과:
-✅ 테이블 랜덤 액세스 제거 (디스크 I/O 감소)
-✅ 인덱스만으로 데이터 조회 (메모리 효율)
-```
-
-#### 실행 계획 (EXPLAIN)
-```
-id  table  type   key                                      rows   Extra
-1   o      range  idx_orders_status_created_at             24,708 Using index
-1   oi     ref    idx_order_items_order_id_product_id_qty  2      Using index ✅
-1   pd     eq_ref PRIMARY                                  1      NULL
-```
-
-✅ **"Using index" 표시 - Covering Index 작동!**
-
-#### 실제 성능 (EXPLAIN ANALYZE)
-```
--> Covering index lookup on oi using idx_order_items_order_id_product_id_quantity
-   (actual time=0.0702..0.0709ms, rows=2 loops=11,992)
-
-Total: 1,017ms (❌ 21% 느려짐!)
-```
-
-#### 결과 분석
-
-**왜 Covering Index가 더 느릴까?**
-
-1. **인덱스 크기 증가**
-   - Covering Index: 3개 컬럼 (order_id, product_id, quantity)
-   - 단일 인덱스: 1개 컬럼 (order_id)
-   - → 인덱스 자체가 커져서 스캔 비용 증가
-
-2. **조인 횟수가 적음**
-   - 이 쿼리는 11,992번만 조인 (전체의 3%)
-   - 테이블 랜덤 액세스가 많지 않아 Covering Index 이점 미미
-   - 오히려 복잡한 인덱스 구조가 오버헤드
-
-3. **InnoDB 클러스터드 인덱스 특성**
-   - InnoDB는 세컨더리 인덱스에서 PK로 바로 접근 가능 (매우 빠름)
-   - order_items가 비교적 작은 테이블이라 테이블 액세스 비용 낮음
-
-4. **캐싱 효과**
-   - 11,992번의 테이블 액세스는 대부분 버퍼 풀에서 처리
-   - Covering Index의 디스크 I/O 절감 효과가 미미
-
-#### 언제 Covering Index가 유리한가?
-
-✅ **유리한 경우:**
-- 조인 횟수가 매우 많을 때 (수십만~수백만 건)
-- 테이블이 매우 클 때 (버퍼 풀에 캐싱 안 됨)
-- SELECT 컬럼이 많고 복잡한 집계 시
-- 읽기 전용 쿼리가 압도적으로 많을 때
-
-❌ **불리한 경우:**
-- 조인 횟수가 적을 때 (1만 건 내외) ← 현재 상황
-- 인덱스 크기가 지나치게 커질 때
-- INSERT/UPDATE가 빈번한 테이블
-- 단순한 집계만 수행할 때
-
----
-
-## 📊 최종 선택 및 비교
-
-### 4단계 최적화 여정
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1단계: 인덱스 없음                                               │
-├─────────────────────────────────────────────────────────────────┤
-│ 실행 시간: 2,930ms                                               │
-│ 실행 계획: order_items(ALL) → products → orders                  │
-│ 처리 데이터: 400,000 rows 전체 스캔                              │
-│ 문제점: Full Table Scan + 400,000번 WHERE 필터링                 │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ 2단계: orders 인덱스만 추가                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ 실행 시간: 4,584ms (❌ 56% 악화!)                                │
-│ 실행 계획: order_items(ALL) → products → orders (변화 없음)      │
-│ 인덱스: idx_orders_status_created_at (인식되나 미사용)           │
-│ 문제점: JOIN 순서가 바뀌지 않아 인덱스 활용 불가                │
-│ 교훈: 단일 테이블 인덱스만으로는 부족!                           │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ 3단계: order_items 인덱스 추가 ⭐ 최적!                         │
-├─────────────────────────────────────────────────────────────────┤
-│ 인덱스: idx_order_items_order_id (order_id)                      │
-│        idx_order_items_product_id (product_id)                   │
-│ 실행 시간: 840ms (✅ 71.3% 개선!)                                │
-│ 실행 계획: orders(range) → order_items(ref) → products(eq_ref)  │
-│ 처리 데이터: 11,992 rows (97% 감소)                              │
-│ 성공 요인: 모든 테이블에 적절한 인덱스 → 옵티마이저 최적 경로   │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│ 4단계: Covering Index 실험                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ 인덱스: idx_order_items_order_id_product_id_quantity (복합)      │
-│ 실행 시간: 1,017ms (❌ 21% 느려짐!)                              │
-│ 실행 계획: "Using index" 표시 (Covering Index 작동)             │
-│ 문제점: 인덱스 크기 증가 + 조인 횟수 적어 이점 미미             │
-│ 교훈: 이론적 최적화 ≠ 실제 성능, 반드시 실측 필요!              │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-                      ⭐ 3단계 선택 ⭐
-```
-
-### 성능 비교표
-
-| 단계 | 인덱스 구조 | 실행 시간 | 개선율 | 선택 |
-|------|------------|----------|--------|------|
-| 1단계 (인덱스 X) | 없음 | 2,930ms | 기준 | ❌ |
-| 2단계 (orders만) | orders 복합 | 4,584ms | -56% | ❌ 악화 |
-| 3단계 (분리) | orders 복합 + order_items 단일 2개 | **840ms** | **+71.3%** | ✅ **최종** |
-| 4단계 (통합) | orders 복합 + order_items 복합 | 1,017ms | +65.3% | ❌ 느림 |
-
-### 최종 선택: 3단계 (단일 인덱스)
-
-**선택한 인덱스:**
-```sql
--- orders 테이블
-CREATE INDEX idx_orders_status_created_at ON orders(status, created_at);
-
--- order_items 테이블
-CREATE INDEX idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX idx_order_items_product_id ON order_items(product_id);
-```
-
-**선택 이유:**
-1. **성능**: 840ms (Covering Index 1017ms보다 21% 빠름)
-2. **유지보수**: 2개 단일 인덱스가 관리 용이
-3. **쓰기 성능**: order_items는 주문마다 INSERT 발생 → 인덱스 간단할수록 유리
-4. **유연성**: product_id 단독 조회에도 인덱스 활용 가능
-5. **공간 효율**: 2개 단일 인덱스가 1개 복합 인덱스보다 효율적
-
-**핵심 교훈:**
-- ✅ Covering Index가 항상 빠른 것은 아님
-- ✅ 실제 데이터와 쿼리 패턴으로 테스트 필수
-- ✅ 이론적 최적화 < 실측 기반 결정
-```
-
----
-
-## 🎓 핵심 교훈
-
-### 1. 인덱스 설계 원칙
-```
-✅ WHERE 절 컬럼: 등호(=) 조건 → 범위(>=, <=) 조건 순서
-✅ JOIN 컬럼: 양쪽 테이블 모두 인덱스 필요
-✅ 복합 인덱스: Left-most prefix rule 고려
-❌ 단일 테이블만 고려하면 실패, 전체 JOIN 전략 고려 필수
-```
-
-### 2. MySQL 옵티마이저 이해
-```
-- 옵티마이저는 비용(cost) 기반으로 JOIN 순서 결정
-- 인덱스가 있어도 테이블 전체 스캔이 더 저렴하면 사용 안 함
-- 여러 테이블 인덱스가 갖춰져야 최적 실행 계획 선택 가능
-- 인덱스 추가 시 실행 계획이 예상과 다를 수 있음 (2단계 사례)
-```
-
-### 3. 실측의 중요성
-```
-❌ 이론적 최적화 ≠ 실제 성능
-✅ EXPLAIN ANALYZE로 실측 필수
-✅ Covering Index도 항상 빠른 것은 아님 (4단계 사례)
-✅ 데이터량, 캐싱, 테이블 크기 등 복합 요인 고려
-```
-
-### 4. 성능 최적화 프로세스
-```
-① EXPLAIN으로 현재 실행 계획 파악
-② 병목 지점 식별 (Full Scan, 높은 rows)
-③ WHERE/JOIN 조건 모두 고려한 인덱스 설계
-④ EXPLAIN ANALYZE로 실제 성능 측정
-⑤ 실행 계획이 바뀌지 않으면 추가 인덱스 검토
-⑥ 여러 전략을 비교 테스트하여 최적안 선택
-```
-
-### 5. 이 프로젝트에서 배운 점
-```
-❌ 2단계: orders 인덱스만으로는 부족 (JOIN 순서가 바뀌지 않음)
-✅ 3단계: order_items 인덱스가 추가되어야 orders가 먼저 실행됨
-✅ 3단계: 모든 조인 테이블에 적절한 인덱스가 있어야 시너지 효과
-❌ 4단계: Covering Index가 오히려 느려질 수 있음 (실측으로 검증)
-✅ 최종: 71.3% 성능 개선 = 3개 인덱스의 협업 결과
-```
-
-### 6. 트레이드오프 고려
-```
-- 읽기 성능 vs 쓰기 성능
-- 인덱스 개수 vs 관리 복잡도
-- 공간 효율 vs 조회 속도
-- 이론적 완벽함 vs 실무 적합성
-```
-
----
-
-## 📝 실행 계획 용어 설명
-
-| 용어 | 설명 | 성능 |
-|------|------|------|
-| **type: ALL** | 전체 테이블 스캔 | ❌ 최악 |
-| **type: range** | 인덱스 범위 스캔 | ✅ 양호 |
-| **type: ref** | 인덱스를 통한 동등 비교 | ✅ 좋음 |
-| **type: eq_ref** | PRIMARY/UNIQUE 키를 통한 조인 | ✅ 최상 |
-| **Using index** | Covering Index (인덱스만으로 조회) | ✅ 최적 |
-| **Using where** | WHERE 절 필터링 수행 | ⚠️ 추가 작업 |
-| **Using temporary** | 임시 테이블 사용 (GROUP BY, ORDER BY) | ⚠️ 추가 비용 |
-| **Using filesort** | 파일 정렬 수행 (ORDER BY) | ⚠️ 추가 비용 |
-
----
-
-## 🔮 추가 최적화 가능성
-
-### 1. Covering Index 재검토
-4단계 실험에서 Covering Index가 더 느렸지만, 다음 경우엔 재고려 가능:
-```sql
--- 대용량 데이터 (수백만 건 이상)에서 재테스트
-CREATE INDEX idx_order_items_covering
-ON order_items(order_id, product_id, quantity);
-```
-**재검토 조건:**
-- 조인 횟수가 수십만 건 이상일 때
-- 테이블 크기가 버퍼 풀을 초과할 때
-- 읽기 전용 쿼리가 압도적일 때
-
-### 2. 쿼리 캐싱
+**ProductRepository.java**
 ```java
-@Cacheable(value = "popularProducts", key = "'last3days'")
-public List<ProductResponse> getPopularProducts() {
-    // 5분 TTL로 캐싱
+// 비관적 락으로 상품 조회
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT p FROM Product p WHERE p.productId = :productId")
+Optional<Product> findByIdWithLock(@Param("productId") String productId);
+
+// 직접 UPDATE 쿼리로 재고 차감
+@Modifying
+@Query("UPDATE Product p SET p.stock.quantity = p.stock.quantity - :amount WHERE p.productId = :productId")
+int decreaseStock(@Param("productId") String productId, @Param("amount") int amount);
+```
+
+**OrderFacade.java**
+```java
+private void deductStock(List<Product> lockedProducts, List<CartItem> cartItems) {
+    for (int i = 0; i < cartItems.size(); i++) {
+        CartItem cartItem = cartItems.get(i);
+        Product product = lockedProducts.get(i);
+        // 직접 UPDATE 쿼리 사용
+        productRepository.decreaseStock(product.getProductId(), cartItem.getQuantity());
+    }
 }
 ```
-→ 840ms → 수 ms로 단축
 
-### 3. 복합 인덱스 최적화
-Left-most prefix rule을 활용한 중복 인덱스 제거:
-```sql
--- 현재: 2개 인덱스
-idx_orders_user_id (user_id)
-idx_orders_user_id_status (user_id, status)
+#### 선택 이유
 
--- 최적화: 1개 인덱스로 통합 가능
-idx_orders_user_id_status (user_id, status)
--- → user_id 단독 조회도 이 인덱스로 커버됨
+**1. 높은 경합 상황**
+- 인기 상품은 여러 사용자가 동시에 주문
+- 같은 상품 레코드에 대한 동시 접근 빈번
+- Lost Update 발생 시 초과 판매(재고 음수) 위험
+
+**2. 비관적 락이 적합한 이유**
 ```
-**장점:**
-- 인덱스 개수 감소 (관리 부담 감소)
-- INSERT/UPDATE 시 인덱스 갱신 횟수 감소
-- 스토리지 공간 절약
+낙관적 락 사용 시:
+- 50명이 동시 주문 → 1명 성공, 49명 재시도
+- 재시도 비용이 매우 높음 (전체 주문 프로세스 반복)
+- 사용자 경험 저하
 
-### 4. 인덱스 유지보수
-```sql
--- 인덱스 통계 갱신
-ANALYZE TABLE orders;
-ANALYZE TABLE order_items;
-
--- 인덱스 사용률 모니터링
-SHOW INDEX FROM orders;
-
--- 사용되지 않는 인덱스 확인
-SELECT * FROM sys.schema_unused_indexes;
-```
-→ 옵티마이저가 최신 통계로 최적 실행 계획 수립
-
-### 5. 파티셔닝 고려 (대용량 데이터)
-```sql
--- created_at 기준 파티셔닝
-ALTER TABLE orders PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026)
-);
-```
-→ 최근 3일 데이터만 스캔, Old 데이터는 자동 스킵
-
----
-
-## 🗂️ 추가 인덱스 설계
-
-인기 상품 조회 외에도 다른 주요 쿼리들을 위한 인덱스를 설계했습니다.
-
-### 1. orders 테이블 - 사용자별 주문 조회
-
-```sql
--- 사용자 ID + 상태로 주문 조회
-CREATE INDEX idx_orders_user_id_status ON orders(user_id, status);
+비관적 락 사용 시:
+- SELECT FOR UPDATE로 행 락 획득
+- 다른 트랜잭션은 락 획득까지 대기
+- 모든 트랜잭션이 순차적으로 성공
+- 재시도 없이 일관된 처리
 ```
 
-**최적화 대상 쿼리:**
-- `findByUserId(String userId)` - 마이페이지 주문 내역
-- `findByUserIdAndStatus(String userId, OrderStatus status)` - 특정 상태 주문 조회
+**3. 직접 UPDATE 쿼리 사용 이유**
+```
+JPA save() 문제:
+- @Embedded 객체(Stock)의 dirty checking 불안정
+- 영속성 컨텍스트와 DB 불일치 발생 가능
 
-**설계 이유:**
-- 복합 인덱스 하나로 두 쿼리 모두 최적화
-- Left-most prefix rule: `(user_id, status)` 인덱스는 `user_id` 단독 조회도 지원
-- 중복 인덱스 제거로 INSERT/UPDATE 성능 향상
-- 페이징 쿼리 성능 향상
+직접 UPDATE 장점:
+- DB 레벨에서 원자적 연산 보장
+- JPA 영속성 컨텍스트 우회
+- 100% 확실한 재고 차감
+```
 
-**❌ 잘못된 설계 (중복 인덱스):**
-```sql
--- 이렇게 하면 안 됨!
-CREATE INDEX idx_orders_user_id ON orders(user_id);              -- 중복!
-CREATE INDEX idx_orders_user_id_status ON orders(user_id, status); -- 이것만 있으면 됨
+#### 동시성 테스트
+
+```java
+@Test
+void createOrder_ConcurrentStock_Overselling() {
+    // 100명이 재고 10개 상품 동시 주문
+    // 예상: 10명 성공, 90명 실패
+    // 결과: 정확히 10개만 판매됨
+    assertThat(successCount.get()).isEqualTo(10);
+    assertThat(finalStock).isEqualTo(0);
+}
 ```
 
 ---
 
-### 2. products 테이블 - 상품 검색 및 정렬
+### 2. 쿠폰 발급 - 비관적 락 + 직접 UPDATE 쿼리
 
-```sql
--- 카테고리 + 가격 정렬
-CREATE INDEX idx_products_category_price ON products(category, price);
+#### 적용 코드
+
+**CouponRepository.java**
+```java
+// 비관적 락으로 쿠폰 조회
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT c FROM Coupon c WHERE c.couponId = :couponId")
+Optional<Coupon> findByIdWithLock(@Param("couponId") String couponId);
+
+// 직접 UPDATE 쿼리로 재고 차감
+@Modifying
+@Query("UPDATE Coupon c SET c.stock.issuedQuantity = c.stock.issuedQuantity + 1, " +
+       "c.stock.remainingQuantity = c.stock.remainingQuantity - 1 " +
+       "WHERE c.couponId = :couponId")
+int issueCoupon(@Param("couponId") String couponId);
 ```
 
-**최적화 대상 쿼리:**
-- `findByCategory(String category)` - 카테고리별 상품 목록
-- `findByCategoryOrderByPriceAsc(String category)` - 카테고리 내 가격순 정렬
-
-**설계 이유:**
-- 카테고리 필터링 후 가격 정렬을 인덱스로 처리
-- ORDER BY price 사용 시 filesort 방지
-- 복합 인덱스로 Covering Index 효과
-
----
-
-### 3. user_coupons 테이블 - 중복 발급 방지
-
-```sql
--- 사용자 + 쿠폰 복합 인덱스 (중복 체크용)
-CREATE INDEX idx_user_coupons_user_coupon ON user_coupons(user_id, coupon_id);
+**UserCouponRepository.java**
+```java
+// 중복 발급 체크도 락 적용
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT COUNT(uc) > 0 FROM UserCoupon uc WHERE uc.userId = :userId AND uc.couponId = :couponId")
+boolean existsByUserIdAndCouponIdWithLock(@Param("userId") String userId, @Param("couponId") String couponId);
 ```
 
-**최적화 대상 쿼리:**
-- `existsByUserIdAndCouponId(String userId, String couponId)` - **중복 발급 체크 (중요!)**
-- `existsByUserIdAndCouponIdWithLock()` - 비관적 락(SELECT FOR UPDATE)
-- `findByUserId(String userId)` - 사용자 보유 쿠폰 목록
+**IssueCouponUseCase.java**
+```java
+@Transactional
+public UserCouponResponse execute(String userId, String couponId) {
+    // 1. 비관적 락으로 쿠폰 조회
+    Coupon coupon = couponRepository.findByIdWithLock(couponId)
+            .orElseThrow(() -> new InvalidCouponException("존재하지 않는 쿠폰입니다"));
 
-**설계 이유:**
-- 쿠폰 중복 발급 방지는 비즈니스 로직의 핵심
-- 동시성 제어(비관적 락) 사용 시 인덱스 필수
-- user_id + coupon_id 조합으로 빠른 존재 여부 확인
-- Left-most prefix rule: `(user_id, coupon_id)` 인덱스는 `user_id` 단독 조회도 지원
+    // 2. 중복 발급 체크 (락 보호)
+    if (userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)) {
+        throw new DuplicateCouponIssueException(couponId);
+    }
 
-**❌ 잘못된 설계 (중복 인덱스):**
-```sql
--- 이렇게 하면 안 됨!
-CREATE INDEX idx_user_coupons_user_id ON user_coupons(user_id);              -- 중복!
-CREATE INDEX idx_user_coupons_user_coupon ON user_coupons(user_id, coupon_id); -- 이것만 있으면 됨
+    // 3. 재고 확인 및 차감
+    if (!coupon.hasStock()) {
+        throw new CouponSoldOutException(couponId);
+    }
+
+    // 4. 직접 UPDATE 쿼리로 재고 차감
+    couponRepository.issueCoupon(couponId);
+
+    // 5. 사용자 쿠폰 발급 이력 저장
+    UserCoupon userCoupon = UserCoupon.issue(userId, coupon);
+    userCouponRepository.save(userCoupon);
+
+    return UserCouponResponse.from(userCoupon, coupon);
+}
+```
+
+#### 선택 이유
+
+**1. 매우 높은 경합 상황**
+- 선착순 쿠폰 발급은 이커머스에서 가장 높은 경합 시나리오
+- 100명 이상이 동시에 같은 쿠폰 발급 시도
+- 재고(예: 50개)보다 많은 요청이 순간적으로 집중
+
+**2. 두 가지 동시성 문제**
+```
+문제 1: 초과 발급
+- 재고 50개인데 100명이 동시 발급
+- Race condition으로 50개 이상 발급 가능
+- 해결: 비관적 락 + 직접 UPDATE
+
+문제 2: 중복 발급
+- 같은 사용자가 동시에 10번 발급 시도
+- 중복 체크와 발급 사이에 Race condition
+- 해결: 중복 체크에도 비관적 락 적용
+```
+
+**3. 낙관적 락이 부적합한 이유**
+```
+100명 동시 요청 시:
+- 낙관적 락: 1명 성공, 99명 OptimisticLockException
+- 99명 모두 재시도 필요
+- 재시도 폭증으로 시스템 부하 급증
+- 서버 장애 위험
+
+비관적 락:
+- 순차적으로 50명 성공
+- 나머지 50명은 "재고 소진" 응답
+- 불필요한 재시도 없음
+- 안정적인 시스템 운영
+```
+
+#### 동시성 테스트
+
+```java
+@Test
+void issueCoupon_ConcurrentIssue_Overselling() {
+    // 100명이 재고 50개 쿠폰 동시 발급 시도
+    assertThat(successCount.get()).isEqualTo(50);
+    assertThat(failCount.get()).isEqualTo(50);
+    assertThat(actualIssuedCount).isEqualTo(50);
+}
+
+@Test
+void issueCoupon_SameUser_DuplicateIssue() {
+    // 같은 사용자가 10번 동시 발급 시도
+    assertThat(successCount.get()).isEqualTo(1);
+    assertThat(failCount.get()).isEqualTo(9);
+    assertThat(userCouponCount).isEqualTo(1);
+}
 ```
 
 ---
 
-### 📋 최종 인덱스 목록
+### 3. 잔액 충전/차감 - 낙관적 락 (@Version)
 
-| 테이블 | 인덱스명 | 컬럼 | 용도 | Left-most 활용 |
-|--------|---------|------|------|---------------|
-| orders | idx_orders_status_created_at | (status, created_at) | 인기 상품 조회 | status 단독 조회도 지원 |
-| orders | idx_orders_user_id_status | (user_id, status) | 사용자별 주문 조회 | user_id 단독 조회도 지원 ✅ |
-| order_items | idx_order_items_order_id | (order_id) | orders와 JOIN | - |
-| order_items | idx_order_items_product_id | (product_id) | products와 JOIN | - |
-| products | idx_products_category_price | (category, price) | 카테고리별 정렬 | category 단독 조회도 지원 |
-| user_coupons | idx_user_coupons_user_coupon | (user_id, coupon_id) | 중복 발급 방지 | user_id 단독 조회도 지원 ✅ |
+#### 적용 코드
 
-**총 6개의 인덱스 (PRIMARY KEY 제외)**
+**User.java**
+```java
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    private String userId;
 
-**중복 인덱스 제거:**
-- ❌ `idx_orders_user_id` 제거 → `idx_orders_user_id_status`로 커버
-- ❌ `idx_user_coupons_user_id` 제거 → `idx_user_coupons_user_coupon`으로 커버
+    @Embedded
+    private Balance balance;
 
-**개선 효과:**
-- 인덱스 개수: 8개 → 6개 (25% 감소)
-- INSERT/UPDATE 시 인덱스 갱신 횟수 감소
-- 스토리지 공간 절약
-- 동일한 쿼리 성능 유지
+    @Version  // 낙관적 락
+    private Long version;
+
+    public void chargeBalance(long amount) {
+        this.balance = balance.charge(amount);
+    }
+
+    public void deductBalance(long amount) {
+        this.balance = balance.deduct(amount);
+    }
+}
+```
+
+**ChargeUserBalanceUseCase.java**
+```java
+@Transactional
+public ChargeBalanceResponse execute(String userId, ChargeBalanceRequest request) {
+    // 일반 조회 (낙관적 락 사용)
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException(userId));
+
+    user.chargeBalance(request.amount());
+    userRepository.save(user);  // @Version 체크
+
+    return new ChargeBalanceResponse(user.getBalance().amount());
+}
+```
+
+**PaymentService.java**
+```java
+private Payment processBalancePayment(Order order) {
+    // 일반 조회 (낙관적 락 사용)
+    User user = userRepository.findById(order.getUserId())
+            .orElseThrow(() -> new PaymentFailedException("사용자를 찾을 수 없습니다"));
+
+    // 잔액 확인 및 차감
+    if (!user.getBalance().isSufficient(order.getFinalAmount())) {
+        throw new InsufficientBalanceException("잔액 부족");
+    }
+
+    user.deductBalance(order.getFinalAmount());
+    userRepository.save(user);  // @Version 체크로 동시성 제어
+
+    // ...
+}
+```
+
+#### 선택 이유
+
+**1. 낮은 경합 상황**
+- 잔액은 개인 리소스 (한 사용자의 잔액에 다른 사용자가 접근하지 않음)
+- 동시 충전/차감은 같은 사용자가 여러 기기에서 접근할 때만 발생
+- 현실적으로 충돌 확률이 매우 낮음
+
+**2. 낙관적 락이 적합한 이유**
+```
+경합 상황 분석:
+- 상품 재고: N명이 1개 상품 → 경합률 높음
+- 쿠폰 재고: N명이 1개 쿠폰 → 경합률 매우 높음
+- 사용자 잔액: 1명이 자신의 잔액 → 경합률 낮음
+
+낙관적 락 장점:
+- 락 대기 시간 없음 (비관적 락은 대기 필요)
+- 처리량(throughput) 향상
+- 데드락 가능성 없음
+- 코드가 간단 (@Version만 추가)
+
+충돌 시:
+- OptimisticLockException 발생
+- 재시도 로직으로 처리
+- 충돌 확률이 낮으므로 재시도 비용 미미
+```
+
+**3. 비관적 락이 부적합한 이유**
+```
+잔액 작업에 비관적 락 사용 시:
+- 모든 잔액 조회에서 SELECT FOR UPDATE
+- 불필요한 DB 락 부하
+- 처리량 감소
+- 데드락 위험 (주문 시 여러 사용자 잔액 동시 처리)
+```
+
+#### @Version 동작 원리
+
+```sql
+-- UPDATE 시 자동으로 version 체크
+UPDATE users
+SET balance = 90000, version = 2
+WHERE user_id = 'user-1' AND version = 1;
+
+-- version이 일치하지 않으면 0 rows affected
+-- JPA가 OptimisticLockException 발생
+```
+
+#### 동시성 테스트
+
+```java
+@Test
+void chargeBalance_Concurrent_LostUpdate() {
+    // 10번 동시 충전 (각 1만원)
+    // 예상: 10만원 (낙관적 락으로 Lost Update 방지)
+    assertThat(finalBalance).isEqualTo(100000L);
+    assertThat(successCount.get()).isEqualTo(10);
+}
+```
 
 ---
 
-## 📚 참고 자료
+### 📊 왜 이렇게 설계했는가?
 
-- [MySQL 8.0 Reference Manual - EXPLAIN](https://dev.mysql.com/doc/refman/8.0/en/explain.html)
-- [MySQL 8.0 Reference Manual - Optimization and Indexes](https://dev.mysql.com/doc/refman/8.0/en/optimization-indexes.html)
-- [High Performance MySQL](https://www.oreilly.com/library/view/high-performance-mysql/9781492080503/)
-- [Use The Index, Luke! - A Guide To Database Performance](https://use-the-index-luke.com/)
+#### 핵심 원칙: 경합 수준에 따른 락 전략 선택
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 경합 수준이 높을수록 비관적 락이 유리                          │
+│ 경합 수준이 낮을수록 낙관적 락이 유리                          │
+└─────────────────────────────────────────────────────────────┘
+
+경합 수준별 전략:
+
+높음 (선착순 쿠폰)  → 비관적 락
+├─ 100명 중 1명만 성공하는 시나리오
+├─ 낙관적 락 시 99명 재시도 → 시스템 과부하
+└─ 비관적 락으로 순차 처리가 효율적
+
+중상 (상품 재고)    → 비관적 락
+├─ 인기 상품에 다수 동시 주문
+├─ 초과 판매 시 비즈니스 리스크
+└─ 정확성이 처리량보다 중요
+
+낮음 (사용자 잔액)  → 낙관적 락
+├─ 개인 리소스로 충돌 확률 낮음
+├─ 충돌 시 재시도 비용 감수 가능
+└─ 처리량과 응답 속도 우선
+```
+
+#### 직접 UPDATE 쿼리를 사용하는 이유
+
+```
+JPA dirty checking의 한계:
+- @Embedded 객체(Stock, CouponStock)의 변경 감지 불안정
+- save() 호출 후에도 UPDATE SQL이 생성되지 않는 경우 발생
+- saveAndFlush()로 해결 가능하나 안티패턴
+
+직접 UPDATE 쿼리의 장점:
+1. 원자성 보장
+   - UPDATE ... SET quantity = quantity - 1
+   - DB 레벨에서 원자적 연산
+
+2. JPA 영속성 컨텍스트 우회
+   - dirty checking에 의존하지 않음
+   - 100% 확실한 데이터 변경
+
+3. 성능 최적화
+   - 불필요한 SELECT 없이 바로 UPDATE
+   - 네트워크 왕복 감소
+```
+
+#### 트레이드오프 분석
+
+| 요소 | 비관적 락 | 낙관적 락 |
+|------|----------|----------|
+| 처리량 | 낮음 (순차 처리) | 높음 (병렬 처리) |
+| 응답 시간 | 느림 (락 대기) | 빠름 (대기 없음) |
+| 재시도 비용 | 없음 | 있음 (충돌 시) |
+| 정확성 | 매우 높음 | 높음 |
+| 데드락 위험 | 있음 | 없음 |
+| 적합한 상황 | 고경합, 정확성 중요 | 저경합, 성능 중요 |
 
 ---
 
-## 📝 라이선스
+### 🧪 테스트 전략
 
-이 프로젝트는 학습 목적으로 작성되었습니다.
+#### 동시성 테스트 구성
+
+```java
+// 테스트 환경 설정
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
+// → 각 스레드가 독립적인 트랜잭션 실행
+
+// ExecutorService로 동시 요청 시뮬레이션
+int threadCount = 100;
+ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+CountDownLatch latch = new CountDownLatch(threadCount);
+
+// 결과 검증
+assertThat(successCount.get()).isEqualTo(expectedSuccess);
+assertThat(failCount.get()).isEqualTo(expectedFail);
+```
+
+#### 테스트 케이스
+
+1. **상품 재고 동시성**
+   - 50명이 재고 100개 상품 동시 주문 (각 2개씩)
+   - 100명이 재고 10개 상품 동시 주문
+
+2. **쿠폰 발급 동시성**
+   - 100명이 재고 50개 쿠폰 동시 발급
+   - 같은 사용자가 10번 동시 발급 (중복 발급 테스트)
+   - 10명이 재고 1개 쿠폰 동시 발급 (극한 경합)
+
+3. **잔액 충전 동시성**
+   - 10번 동시 충전 (Lost Update 테스트)
+   - 100번 동시 충전 (대량 동시성)
+   - 충전/차감 동시 실행 (혼합 테스트)
