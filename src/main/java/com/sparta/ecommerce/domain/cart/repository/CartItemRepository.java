@@ -2,6 +2,10 @@ package com.sparta.ecommerce.domain.cart.repository;
 
 import com.sparta.ecommerce.domain.cart.entity.CartItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -23,5 +27,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, String> {
     /**
      * 장바구니의 모든 항목 삭제 (장바구니 비우기)
      */
-    void deleteByCartId(String cartId);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM CartItem c WHERE c.cartId = :cartId")
+    void deleteByCartId(@Param("cartId") String cartId);
 }

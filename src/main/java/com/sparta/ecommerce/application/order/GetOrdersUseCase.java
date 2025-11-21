@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ public class GetOrdersUseCase {
      * @param status 주문 상태 필터 (optional)
      * @return 페이징된 주문 목록
      */
+    @Transactional(readOnly = true)
     public OrderListResponse execute(String userId, int page, int limit, String status) {
         // Pageable 생성 (page는 0부터 시작하므로 -1, 최신순 정렬)
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());

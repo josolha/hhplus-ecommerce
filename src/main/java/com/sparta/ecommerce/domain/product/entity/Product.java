@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 /**
  * 상품 엔티티
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "products", indexes = {
         @Index(name = "idx_products_category_price", columnList = "category, price")
 })
+@DynamicUpdate
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

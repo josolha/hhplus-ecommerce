@@ -9,9 +9,9 @@ import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
 import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.vo.Balance;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자 잔액 충전 UseCase
@@ -25,8 +25,9 @@ public class ChargeUserBalanceUseCase {
 
     @Transactional
     public ChargeBalanceResponse execute(String userId, ChargeBalanceRequest request) {
-        // 1. 사용자 조회
-        User user = userRepository.findById(userId)
+        // 1. 사용자 조회 (비관적 락 적용)
+        // SQL: SELECT * FROM users WHERE user_id = ? FOR UPDATE
+        User user = userRepository.findByIdWithLock(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 2. 충전 전 잔액 저장 (응답용)

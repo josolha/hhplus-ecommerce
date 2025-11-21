@@ -7,6 +7,7 @@ import com.sparta.ecommerce.domain.product.ProductSortType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +15,7 @@ public class GetProductsUseCase {
 
     private final ProductRepository productRepository;
 
+    @Transactional(readOnly = true)
     public List<ProductResponse> execute(String category, String sort) {
         // 1. Repository에서 조회
         List<Product> products = fetchProducts(category, sort);

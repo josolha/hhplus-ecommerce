@@ -12,6 +12,7 @@ import com.sparta.ecommerce.domain.product.exception.InsufficientStockException;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -32,6 +33,7 @@ public class AddToCartUseCase {
      * @param request 추가 요청 정보
      * @return 추가된 장바구니 항목 정보
      */
+    @Transactional
     public CartItemResponse execute(AddToCartRequest request) {
         // 1. 상품 존재 확인
         Product product = productRepository.findById(request.productId())

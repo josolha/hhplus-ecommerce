@@ -6,6 +6,7 @@ import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -13,6 +14,7 @@ public class GetProductDetailUseCase {
 
     private final ProductRepository productRepository;
 
+    @Transactional(readOnly = true)
     public ProductResponse execute(String productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));

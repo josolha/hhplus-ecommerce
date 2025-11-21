@@ -4,6 +4,7 @@ import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -29,4 +30,15 @@ public interface CouponRepository extends JpaRepository<Coupon, String> {
      */
     @Query("SELECT c FROM Coupon c WHERE c.stock.remainingQuantity > 0 AND c.expiresAt > :now")
     List<Coupon> findAvailableCoupons(@Param("now") LocalDateTime now);
+
+    /**
+     * 쿠폰 발급 (재고 차감) - 직접 UPDATE 쿼리
+     * @param couponId 쿠폰 ID
+     * @return 업데이트된 행 수
+     */
+    @Modifying
+    @Query("UPDATE Coupon c SET c.stock.issuedQuantity = c.stock.issuedQuantity + 1, " +
+           "c.stock.remainingQuantity = c.stock.remainingQuantity - 1 " +
+           "WHERE c.couponId = :couponId")
+    int issueCoupon(@Param("couponId") String couponId);
 }

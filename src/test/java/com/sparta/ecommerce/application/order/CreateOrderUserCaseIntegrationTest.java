@@ -109,7 +109,7 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
 
         // 초기 상태 저장
         long initialBalance = testUser.getBalance().amount();
-        int initialStock = testProduct.getStock().quantity();
+        int initialStock = testProduct.getStock().getQuantity();
 
         //when
         OrderResponse response = createOrderUseCase.execute(request);
@@ -136,7 +136,7 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
 
         // then - Product 재고 감소 검증
         Product updatedProduct = productRepository.findById(testProduct.getProductId()).get();
-        assertThat(updatedProduct.getStock().quantity())
+        assertThat(updatedProduct.getStock().getQuantity())
                 .isEqualTo(initialStock - 2)
                 .isEqualTo(98);
 
@@ -205,7 +205,7 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
 
         // then - Product 재고 감소 검증
         Product updatedProduct = productRepository.findById(testProduct.getProductId()).get();
-        assertThat(updatedProduct.getStock().quantity()).isEqualTo(98);  // 100 - 2
+        assertThat(updatedProduct.getStock().getQuantity()).isEqualTo(98);  // 100 - 2
 
         // then - Order 저장 검증
         Order savedOrder = orderRepository.findById(response.orderId()).get();

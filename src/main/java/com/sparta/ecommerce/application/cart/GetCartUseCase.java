@@ -11,6 +11,7 @@ import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.exception.ProductNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class GetCartUseCase {
      * @param userId 사용자 ID
      * @return 장바구니 정보
      */
+    @Transactional(readOnly = true)
     public CartResponse execute(String userId) {
         // 1. 사용자의 장바구니 조회
         Cart cart = cartRepository.findByUserId(userId)

@@ -28,7 +28,12 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, String> 
      * 사용자가 특정 쿠폰을 이미 발급받았는지 확인 (비관적 락)
      * SELECT FOR UPDATE로 동시성 제어
      */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+   // @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT CASE WHEN COUNT(uc) > 0 THEN true ELSE false END FROM UserCoupon uc WHERE uc.userId = :userId AND uc.couponId = :couponId")
     boolean existsByUserIdAndCouponIdWithLock(@Param("userId") String userId, @Param("couponId") String couponId);
+
+    /**
+     * 쿠폰 ID로 발급된 모든 사용자 쿠폰 조회
+     */
+    List<UserCoupon> findByCouponId(String couponId);
 }

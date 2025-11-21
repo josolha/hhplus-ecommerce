@@ -5,6 +5,7 @@ import com.sparta.ecommerce.application.product.dto.PopularProductResponse;
 import com.sparta.ecommerce.domain.order.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +32,7 @@ public class GetPopularProductsUseCase {
      * @param limit 조회할 상품 개수
      * @return 인기 상품 목록 (판매량 포함)
      */
+    @Transactional(readOnly = true)
     public List<PopularProductResponse> execute(int days, int limit) {
         // 최근 N일 시작 날짜 계산
         LocalDateTime startDate = LocalDateTime.now().minusDays(days);

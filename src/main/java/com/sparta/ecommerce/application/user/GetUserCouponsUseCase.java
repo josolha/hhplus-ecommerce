@@ -9,6 +9,7 @@ import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import com.sparta.ecommerce.domain.coupon.exception.InvalidCouponException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class GetUserCouponsUseCase {
      * @param status 쿠폰 상태 필터 (null이면 전체)
      * @return 사용자 쿠폰 목록
      */
+    @Transactional(readOnly = true)
     public List<UserCouponResponse> execute(String userId, CouponStatus status) {
         List<UserCoupon> userCoupons = userCouponRepository.findByUserId(userId);
 

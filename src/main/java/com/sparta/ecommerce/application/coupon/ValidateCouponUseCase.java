@@ -7,6 +7,7 @@ import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.exception.InvalidCouponException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 쿠폰 유효성 검증 유스케이스
@@ -22,6 +23,7 @@ public class ValidateCouponUseCase {
      * @param request 쿠폰 ID와 주문 금액
      * @return 유효성 검증 결과
      */
+    @Transactional(readOnly = true)
     public ValidateCouponResponse execute(ValidateCouponRequest request) {
         // 1. 쿠폰 조회
         Coupon coupon = couponRepository.findById(request.couponId())

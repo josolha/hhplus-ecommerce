@@ -13,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 /**
  * 쿠폰 발급 유스케이스
  *
@@ -74,16 +72,14 @@ public class IssueCouponUseCase {
             throw new CouponSoldOutException(couponId);
         }
 
-        // 5. 쿠폰 재고 차감
-        Coupon issuedCoupon = coupon.issue();
-        couponRepository.save(issuedCoupon);
+        // 5. 쿠폰 재고 차감 (직접 UPDATE 쿼리)
+        couponRepository.issueCoupon(couponId);
 
         // 6. 사용자 쿠폰 발급 이력 저장
-        String userCouponId = "UC" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        UserCoupon userCoupon = UserCoupon.issue(userCouponId, userId, issuedCoupon);
+        UserCoupon userCoupon = UserCoupon.issue(userId, coupon);
         userCouponRepository.save(userCoupon);
 
         // 7. 응답 생성
-        return UserCouponResponse.from(userCoupon, issuedCoupon);
+        return UserCouponResponse.from(userCoupon, coupon);
     }
 }
