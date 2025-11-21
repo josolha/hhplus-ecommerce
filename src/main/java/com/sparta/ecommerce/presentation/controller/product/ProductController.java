@@ -59,7 +59,7 @@ public class ProductController {
             @Parameter(description = "상품 ID")
             @PathVariable
             @NotBlank
-            @Pattern(regexp = "P\\d{3,}", message = "상품 ID 형식이 올바르지 않습니다")
+            //@Pattern(regexp = "P\\d{3,}", message = "상품 ID 형식이 올바르지 않습니다")
             String productId) {
 
         ProductResponse product = getProductDetailUseCase.execute(productId);

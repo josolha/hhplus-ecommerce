@@ -4,6 +4,7 @@ import com.sparta.ecommerce.domain.product.entity.Product;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -44,4 +45,14 @@ public interface ProductRepository extends JpaRepository<Product, String> {
      * JpaRepository의 findAllById 사용 권장, 또는 커스텀 메서드
      */
     List<Product> findByProductIdIn(List<String> productIds);
+
+    /**
+     * 재고 차감 (직접 UPDATE 쿼리)
+     * @param productId 상품 ID
+     * @param amount 차감할 수량
+     * @return 업데이트된 행 수
+     */
+    @Modifying
+    @Query("UPDATE Product p SET p.stock.quantity = p.stock.quantity - :amount WHERE p.productId = :productId")
+    int decreaseStock(@Param("productId") String productId, @Param("amount") int amount);
 }

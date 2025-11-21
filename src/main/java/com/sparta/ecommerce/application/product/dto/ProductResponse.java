@@ -25,7 +25,7 @@ public record ProductResponse(
                 product.getProductId(),
                 product.getName(),
                 product.getPrice(),
-                product.getStock().quantity(),  // Stock VO에서 quantity 추출
+                product.getStock().getQuantity(),  // Stock VO에서 quantity 추출
                 product.getCategory()
         );
     }

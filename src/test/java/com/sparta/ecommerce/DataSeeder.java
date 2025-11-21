@@ -73,6 +73,9 @@ public class DataSeeder {
     void seedConcurrencyTestData() {
         System.out.println("=== 동시성 테스트 데이터 생성 시작 ===");
 
+        // 기존 테스트 데이터 삭제 (외래키 순서 고려)
+        clearTestData();
+
         seedTestUsers();           // 테스트 유저 100명
         seedTestCoupon();          // 선착순 쿠폰 (재고 10개)
         seedTestProduct();         // 테스트 상품 (재고 10개)
@@ -82,6 +85,26 @@ public class DataSeeder {
 
         System.out.println("=== 동시성 테스트 데이터 생성 완료 ===");
         printTestDataSummary();
+    }
+
+    /**
+     * 기존 테스트 데이터 삭제
+     */
+    private void clearTestData() {
+        System.out.println("기존 테스트 데이터 삭제 중...");
+
+        // 외래키 의존성 순서대로 삭제
+        jdbcTemplate.update("DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id LIKE 'test-user-%')");
+        jdbcTemplate.update("DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE user_id LIKE 'test-user-%')");
+        jdbcTemplate.update("DELETE FROM orders WHERE user_id LIKE 'test-user-%'");
+        jdbcTemplate.update("DELETE FROM cart_items WHERE id LIKE 'test-cart-item-%'");
+        jdbcTemplate.update("DELETE FROM carts WHERE id LIKE 'test-cart-%'");
+        jdbcTemplate.update("DELETE FROM user_coupons WHERE id LIKE 'test-user-coupon-%'");
+        jdbcTemplate.update("DELETE FROM users WHERE id LIKE 'test-user-%'");
+        jdbcTemplate.update("DELETE FROM coupons WHERE id LIKE 'test-coupon-%'");
+        jdbcTemplate.update("DELETE FROM products WHERE id LIKE 'test-product-%'");
+
+        System.out.println("기존 테스트 데이터 삭제 완료");
     }
 
     /**
@@ -179,7 +202,7 @@ public class DataSeeder {
     private void seedTestUserCoupons() {
         System.out.println("테스트 유저 쿠폰 발급 중...");
 
-        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at, version) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         int couponCount = 10;  // 10명에게만 발급
 
@@ -195,6 +218,7 @@ public class DataSeeder {
                 ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
                 ps.setNull(5, java.sql.Types.TIMESTAMP);  // used_at = null
                 ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now().plusDays(30)));
+                ps.setLong(7, 0L);  // version
             }
 
             @Override
@@ -235,7 +259,7 @@ public class DataSeeder {
     private void seedTestUsers() {
         System.out.println("테스트 유저 생성 중...");
 
-        String sql = "INSERT INTO users (id, name, email, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (id, name, email, balance, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         int testUserCount = 100;
 
@@ -248,8 +272,9 @@ public class DataSeeder {
                 ps.setString(2, "테스트유저" + (i + 1));
                 ps.setString(3, "testuser" + (i + 1) + "@test.com");
                 ps.setLong(4, 1_000_000); // 100만원
-                ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setLong(5, 0L); // version
                 ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
+                ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
             }
 
             @Override

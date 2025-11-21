@@ -50,7 +50,6 @@ public class OrderFacade {
      * @param couponId 쿠폰 ID (nullable)
      * @return 생성된 주문과 주문 항목
      */
-    @Transactional
     public OrderResult createOrder(String userId, String couponId) {
         // 1. 장바구니 조회 및 검증
         Cart cart = getCart(userId);
@@ -81,7 +80,16 @@ public class OrderFacade {
         applyCoupon(userId, couponId);
 
         // 8. 장바구니 비우기
-        cartItemRepository.deleteByCartId(cart.getCartId());
+        try {
+            cartItemRepository.deleteByCartId(cart.getCartId());
+        } catch (Exception e) {
+            System.err.println("=== 장바구니 삭제 에러 ===");
+            System.err.println("Cart ID: " + cart.getCartId());
+            System.err.println("Exception: " + e.getClass().getName());
+            System.err.println("Message: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
 
         return new OrderResult(order, preparation.orderItems());
     }
@@ -108,15 +116,15 @@ public class OrderFacade {
     }
 
     /**
-     * 재고 차감
+     * 재고 차감 (직접 UPDATE 쿼리 사용)
      */
     private void deductStock(List<Product> lockedProducts, List<CartItem> cartItems) {
         for (int i = 0; i < cartItems.size(); i++) {
             CartItem cartItem = cartItems.get(i);
             Product product = lockedProducts.get(i);
 
-            product.reserveStock(cartItem.getQuantity());
-            productRepository.save(product);
+            // 재고 확인은 이미 prepare()에서 했으므로 바로 차감
+            productRepository.decreaseStock(product.getProductId(), cartItem.getQuantity());
         }
     }
 
@@ -146,8 +154,8 @@ public class OrderFacade {
                     .findFirst()
                     .orElseThrow();
 
-            UserCoupon usedCoupon = userCoupon.use();
-            userCouponRepository.save(usedCoupon);
+            userCoupon.use();
+            userCouponRepository.save(userCoupon);
         }
     }
 

@@ -97,7 +97,7 @@ class GetProductDetailUseCaseTest {
         assertThat(response.productId()).isEqualTo(testProduct.getProductId());
         assertThat(response.name()).isEqualTo(testProduct.getName());
         assertThat(response.price()).isEqualTo(testProduct.getPrice());
-        assertThat(response.stock()).isEqualTo(testProduct.getStock().quantity());
+        assertThat(response.stock()).isEqualTo(testProduct.getStock().getQuantity());
         assertThat(response.category()).isEqualTo(testProduct.getCategory());
     }
 }

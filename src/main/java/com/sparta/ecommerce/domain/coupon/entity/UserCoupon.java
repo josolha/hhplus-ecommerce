@@ -53,7 +53,7 @@ public class UserCoupon {
     private LocalDateTime expiresAt;
 
     @Version
-    private Long version;
+    private Long version = 0L;
 
     @PrePersist
     protected void onCreate() {
@@ -78,16 +78,8 @@ public class UserCoupon {
     /**
      * 쿠폰 사용 처리
      */
-    public UserCoupon use() {
-        return UserCoupon.builder()
-                .userCouponId(this.userCouponId)
-                .userId(this.userId)
-                .couponId(this.couponId)
-                .issuedAt(this.issuedAt)
-                .usedAt(LocalDateTime.now())
-                .expiresAt(this.expiresAt)
-                .version(this.version)  // 낙관적 락을 위해 version 유지
-                .build();
+    public void use() {
+        this.usedAt = LocalDateTime.now();
     }
 
     public CouponStatus getStatus() {

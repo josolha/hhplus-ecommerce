@@ -46,7 +46,7 @@ public class OrderItemPreparationService {
             if (!product.canAddToCart(cartItem.getQuantity())) {
                 throw new InsufficientStockException(
                         "상품 재고가 부족합니다: " + product.getName() +
-                        " (요청: " + cartItem.getQuantity() + ", 재고: " + product.getStock().quantity() + ")"
+                        " (요청: " + cartItem.getQuantity() + ", 재고: " + product.getStock().getQuantity() + ")"
                 );
             }
 

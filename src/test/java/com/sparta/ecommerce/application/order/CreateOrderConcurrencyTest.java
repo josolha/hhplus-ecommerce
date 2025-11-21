@@ -137,7 +137,7 @@ public class CreateOrderConcurrencyTest extends IntegrationTestBase {
         // 실제 DB에서 재고 확인
         entityManager.clear();
         Product updatedProduct = productRepository.findById(testProduct.getProductId()).get();
-        int finalStock = updatedProduct.getStock().quantity();
+        int finalStock = updatedProduct.getStock().getQuantity();
 
         System.out.println("초기 재고: 100");
         System.out.println("최종 재고: " + finalStock);
@@ -226,7 +226,7 @@ public class CreateOrderConcurrencyTest extends IntegrationTestBase {
         // then
         entityManager.clear();
         Product updatedProduct = productRepository.findById(limitedProduct.getProductId()).get();
-        int finalStock = updatedProduct.getStock().quantity();
+        int finalStock = updatedProduct.getStock().getQuantity();
 
         System.out.println("=== 초과 판매 테스트 결과 ===");
         System.out.println("초기 재고: 10");

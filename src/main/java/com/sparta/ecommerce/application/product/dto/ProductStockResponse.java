@@ -16,7 +16,7 @@ public record ProductStockResponse(
     public static ProductStockResponse from(Product product) {
         return new ProductStockResponse(
                 product.getProductId(),
-                product.getStock().quantity(),
+                product.getStock().getQuantity(),
                 !product.getStock().isOutOfStock()
         );
     }

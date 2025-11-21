@@ -42,7 +42,7 @@ public class ProductRepositoryTest extends IntegrationTestBase {
         Product foundProduct = productRepository.findById(savedProduct.getProductId()).get();
         assertThat(foundProduct.getName()).isEqualTo("테스트상품");
         assertThat(foundProduct.getPrice()).isEqualTo(10000L);
-        assertThat(foundProduct.getStock().quantity()).isEqualTo(100);
+        assertThat(foundProduct.getStock().getQuantity()).isEqualTo(100);
     }
 
     @Test
@@ -67,7 +67,7 @@ public class ProductRepositoryTest extends IntegrationTestBase {
 
         // then
         Product updatedProduct = productRepository.findById(product.getProductId()).get();
-        assertThat(updatedProduct.getStock().quantity()).isEqualTo(70);
+        assertThat(updatedProduct.getStock().getQuantity()).isEqualTo(70);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class ProductRepositoryTest extends IntegrationTestBase {
 
         // then
         Product updatedProduct = productRepository.findById(product.getProductId()).get();
-        assertThat(updatedProduct.getStock().quantity()).isEqualTo(50);  // 100 - 30 - 20
+        assertThat(updatedProduct.getStock().getQuantity()).isEqualTo(50);  // 100 - 30 - 20
     }
 
     @Test
@@ -140,7 +140,7 @@ public class ProductRepositoryTest extends IntegrationTestBase {
         Product foundProduct = productRepository.findById(product.getProductId()).get();
 
         // then
-        assertThat(foundProduct.getStock().quantity()).isEqualTo(0);
+        assertThat(foundProduct.getStock().getQuantity()).isEqualTo(0);
         assertThatThrownBy(() -> foundProduct.reserveStock(1))
                 .isInstanceOf(InsufficientStockException.class);
     }

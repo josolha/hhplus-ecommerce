@@ -42,7 +42,7 @@ public class User extends BaseEntity {
     private Balance balance;
 
     @Version
-    private Long version;
+    private Long version = 0L;
 
     /**
      * 잔액 충전
