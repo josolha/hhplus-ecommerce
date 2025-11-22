@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 @SpringBootTest
 @ActiveProfiles("local")
 @Commit  // 테스트 종료 후에도 데이터 유지
-//@Disabled("수동 실행용 - 필요시 @Disabled 제거 후 실행")
+@Disabled("수동 실행용 - 필요시 @Disabled 제거 후 실행")
 public class DataSeeder {
 
     @Autowired
@@ -524,6 +524,7 @@ public class DataSeeder {
     }
 
     /**
+     *
      * 생성된 데이터 개수 확인
      */
     private void printDataCounts() {

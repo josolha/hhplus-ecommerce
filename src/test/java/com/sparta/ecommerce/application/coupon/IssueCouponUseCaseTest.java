@@ -76,7 +76,7 @@ class IssueCouponUseCaseTest {
         assertThat(response.issuedAt()).isNotNull();
         assertThat(response.usedAt()).isNull();
 
-        verify(couponRepository).save(any(Coupon.class));
+        verify(couponRepository).issueCoupon(couponId);
         verify(userCouponRepository).save(any());
     }
 
@@ -193,14 +193,10 @@ class IssueCouponUseCaseTest {
         given(couponRepository.findByIdWithLock(couponId)).willReturn(Optional.of(coupon));
         given(userCouponRepository.existsByUserIdAndCouponIdWithLock(userId, couponId)).willReturn(false);
 
-        ArgumentCaptor<Coupon> couponCaptor = ArgumentCaptor.forClass(Coupon.class);
-
         // when
         issueCouponUseCase.execute(userId, couponId);
 
         // then
-        verify(couponRepository).save(couponCaptor.capture());
-        Coupon savedCoupon = couponCaptor.getValue();
-        assertThat(savedCoupon.getStock().remainingQuantity()).isEqualTo(49); // 50 -> 49
+        verify(couponRepository).issueCoupon(couponId);
     }
 }

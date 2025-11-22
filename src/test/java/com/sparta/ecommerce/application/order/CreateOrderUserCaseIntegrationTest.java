@@ -40,19 +40,19 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
     private UserRepository userRepository;
 
     @Autowired
-    private ProductRepository productRepository;  // 추가 필요
+    private ProductRepository productRepository;
 
     @Autowired
-    private CartRepository cartRepository;  // 추가 필요
+    private CartRepository cartRepository;
 
     @Autowired
-    private CartItemRepository cartItemRepository;  // 추가 필요
+    private CartItemRepository cartItemRepository;
 
     @Autowired
-    private OrderRepository orderRepository;  // 추가 필요
+    private OrderRepository orderRepository;
 
     @Autowired
-    private OrderItemRepository orderItemRepository;  // 추가 필요
+    private OrderItemRepository orderItemRepository;
 
     @Autowired
     private CouponRepository couponRepository;
@@ -65,10 +65,9 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
     private Cart testCart;
 
     @BeforeEach
-    void setUp(){
+    void setUpTest(){
         // 1. 사용자 생성 (잔액 충분하게)
         testUser = User.builder()
-                //.userId("test-user-1")
                 .name("테스트유저")
                 .email("test@example.com")
                 .balance(new Balance(100000L))  // 10만원
@@ -101,11 +100,12 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
         entityManager.flush();
         entityManager.clear();
     }
+
     @Test
     @DisplayName("주문 생성 성공 -  장바구니 상품으로 주문")
     public void createOrder_Success() throws Exception{
         //given
-        CreateOrderRequest request = new CreateOrderRequest(testUser.getUserId(),null);
+        CreateOrderRequest request = new CreateOrderRequest(testUser.getUserId(), null);
 
         // 초기 상태 저장
         long initialBalance = testUser.getBalance().amount();
@@ -123,19 +123,22 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
         assertThat(response.finalAmount()).isEqualTo(20000L);
 
         // then - Order 엔티티 DB 저장 검증
-        Order savedOrder = orderRepository.findById(response.orderId()).get();
+        Order savedOrder = orderRepository.findById(response.orderId())
+                .orElseThrow(() -> new AssertionError("Order not found"));
         assertThat(savedOrder.getStatus()).isEqualTo(OrderStatus.COMPLETED);
         assertThat(savedOrder.getUserId()).isEqualTo(testUser.getUserId());
         assertThat(savedOrder.getTotalAmount()).isEqualTo(20000L);
 
         // then - User 잔액 차감 검증
-        User updatedUser = userRepository.findById(testUser.getUserId()).get();
+        User updatedUser = userRepository.findById(testUser.getUserId())
+                .orElseThrow(() -> new AssertionError("User not found"));
         assertThat(updatedUser.getBalance().amount())
                 .isEqualTo(initialBalance - 20000L)
                 .isEqualTo(80000L);
 
         // then - Product 재고 감소 검증
-        Product updatedProduct = productRepository.findById(testProduct.getProductId()).get();
+        Product updatedProduct = productRepository.findById(testProduct.getProductId())
+                .orElseThrow(() -> new AssertionError("Product not found"));
         assertThat(updatedProduct.getStock().getQuantity())
                 .isEqualTo(initialStock - 2)
                 .isEqualTo(98);
@@ -180,7 +183,7 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
         // request에 쿠폰 ID 포함
         CreateOrderRequest request = new CreateOrderRequest(
                 testUser.getUserId(),
-                coupon.getCouponId()  // 쿠폰 ID
+                userCoupon.getUserCouponId()  // 사용자 쿠폰 ID
         );
 
         // when
@@ -195,21 +198,25 @@ public class CreateOrderUserCaseIntegrationTest extends IntegrationTestBase {
         assertThat(response.finalAmount()).isEqualTo(15000L);  // 20000 - 5000
 
         // then - UserCoupon 사용 처리 검증
-        UserCoupon usedCoupon = userCouponRepository.findById(userCoupon.getUserCouponId()).get();
+        UserCoupon usedCoupon = userCouponRepository.findById(userCoupon.getUserCouponId())
+                .orElseThrow(() -> new AssertionError("UserCoupon not found"));
         assertThat(usedCoupon.getUsedAt()).isNotNull();
         assertThat(usedCoupon.isUsed()).isTrue();
 
         // then - User 잔액 차감 검증 (쿠폰 적용)
-        User updatedUser = userRepository.findById(testUser.getUserId()).get();
+        User updatedUser = userRepository.findById(testUser.getUserId())
+                .orElseThrow(() -> new AssertionError("User not found"));
         assertThat(updatedUser.getBalance().amount()).isEqualTo(85000L);  // 100000 - 15000
 
         // then - Product 재고 감소 검증
-        Product updatedProduct = productRepository.findById(testProduct.getProductId()).get();
+        Product updatedProduct = productRepository.findById(testProduct.getProductId())
+                .orElseThrow(() -> new AssertionError("Product not found"));
         assertThat(updatedProduct.getStock().getQuantity()).isEqualTo(98);  // 100 - 2
 
         // then - Order 저장 검증
-        Order savedOrder = orderRepository.findById(response.orderId()).get();
-        assertThat(savedOrder.getUserCouponId()).isEqualTo(coupon.getCouponId());
+        Order savedOrder = orderRepository.findById(response.orderId())
+                .orElseThrow(() -> new AssertionError("Order not found"));
+        assertThat(savedOrder.getUserCouponId()).isEqualTo(userCoupon.getUserCouponId());
         assertThat(savedOrder.getDiscountAmount()).isEqualTo(5000L);
     }
 

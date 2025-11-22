@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.*;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
 import com.sparta.ecommerce.domain.user.entity.User;
+import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
 import com.sparta.ecommerce.domain.user.vo.Balance;
@@ -25,6 +26,9 @@ class ChargeUserBalanceUseCaseTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private BalanceHistoryRepository balanceHistoryRepository;
+
     @InjectMocks
     private ChargeUserBalanceUseCase chargeUserBalanceUseCase;
 
@@ -42,7 +46,7 @@ class ChargeUserBalanceUseCaseTest {
                 .balance(new Balance(previousBalance))
                 .build();
 
-        given(userRepository.findById(userId))
+        given(userRepository.findByIdWithLock(userId))
                 .willReturn(Optional.of(user));
 
         ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
@@ -78,7 +82,7 @@ class ChargeUserBalanceUseCaseTest {
                 .balance(Balance.zero())
                 .build();
 
-        given(userRepository.findById(userId))
+        given(userRepository.findByIdWithLock(userId))
                 .willReturn(Optional.of(user));
 
         ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
@@ -106,7 +110,7 @@ class ChargeUserBalanceUseCaseTest {
                 .balance(new Balance(100000))
                 .build();
 
-        given(userRepository.findById(userId))
+        given(userRepository.findByIdWithLock(userId))
                 .willReturn(Optional.of(user));
 
         ChargeBalanceRequest request = new ChargeBalanceRequest(0L);
@@ -130,7 +134,7 @@ class ChargeUserBalanceUseCaseTest {
                 .balance(new Balance(100000))
                 .build();
 
-        given(userRepository.findById(userId))
+        given(userRepository.findByIdWithLock(userId))
                 .willReturn(Optional.of(user));
 
         ChargeBalanceRequest request = new ChargeBalanceRequest(-10000L);
@@ -148,7 +152,7 @@ class ChargeUserBalanceUseCaseTest {
     void 사용자_없음_예외() {
         // given
         String userId = "INVALID_USER";
-        given(userRepository.findById(userId))
+        given(userRepository.findByIdWithLock(userId))
                 .willReturn(Optional.empty());
 
         ChargeBalanceRequest request = new ChargeBalanceRequest(10000L);
@@ -175,7 +179,7 @@ class ChargeUserBalanceUseCaseTest {
                 .balance(new Balance(previousBalance))
                 .build();
 
-        given(userRepository.findById(userId))
+        given(userRepository.findByIdWithLock(userId))
                 .willReturn(Optional.of(user));
 
         ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
