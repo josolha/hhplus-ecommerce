@@ -16,12 +16,9 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<User, String> {
 
     /**
-     * 사용자 조회 (비관적 락)
-     * SELECT FOR UPDATE로 동시성 제어
+     * 사용자 ID로 조회
      */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT u FROM User u WHERE u.userId = :userId")
-    Optional<User> findByIdWithLock(@Param("userId") String userId);
+    Optional<User> findByUserId(String userId);
 }
 /*
 public interface UserRepository {

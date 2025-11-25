@@ -36,6 +36,10 @@ out/
 ### VS Code ###
 .vscode/
 
+### Logs ###
+logs/
+*.log
+
 # application 설정 파일 제외 (예제 파일은 포함)
 application.yml
 application-*.yml

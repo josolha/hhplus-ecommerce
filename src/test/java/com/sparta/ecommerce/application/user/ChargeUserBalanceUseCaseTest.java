@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.*;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
 import com.sparta.ecommerce.domain.user.entity.User;
+import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
 import com.sparta.ecommerce.domain.user.vo.Balance;
@@ -24,6 +25,9 @@ class ChargeUserBalanceUseCaseTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BalanceHistoryRepository balanceHistoryRepository;
 
     @InjectMocks
     private ChargeUserBalanceUseCase chargeUserBalanceUseCase;
