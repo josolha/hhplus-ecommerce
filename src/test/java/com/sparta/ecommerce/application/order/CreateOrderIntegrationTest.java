@@ -52,7 +52,7 @@ class CreateOrderIntegrationTest {
                 .email("test@test.com")
                 .name("테스트유저")
                 .balance(new Balance(1_000_000L))
-                .version(0L)
+                //.version(0L)
                 .build());
 
         // 테스트 상품 생성 (재고 10개)

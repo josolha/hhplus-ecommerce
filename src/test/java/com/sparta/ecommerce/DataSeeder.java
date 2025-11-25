@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 @SpringBootTest
 @ActiveProfiles("local")
 @Commit  // 테스트 종료 후에도 데이터 유지
-@Disabled("수동 실행용 - 필요시 @Disabled 제거 후 실행")
+//@Disabled("수동 실행용 - 필요시 @Disabled 제거 후 실행")
 public class DataSeeder {
 
     @Autowired
@@ -202,7 +202,8 @@ public class DataSeeder {
     private void seedTestUserCoupons() {
         System.out.println("테스트 유저 쿠폰 발급 중...");
 
-        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at, version) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)";
+
 
         int couponCount = 10;  // 10명에게만 발급
 
@@ -218,7 +219,6 @@ public class DataSeeder {
                 ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
                 ps.setNull(5, java.sql.Types.TIMESTAMP);  // used_at = null
                 ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now().plusDays(30)));
-                ps.setLong(7, 0L);  // version
             }
 
             @Override

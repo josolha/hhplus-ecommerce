@@ -25,9 +25,8 @@ public class ChargeUserBalanceUseCase {
 
     @Transactional
     public ChargeBalanceResponse execute(String userId, ChargeBalanceRequest request) {
-        // 1. 사용자 조회 (비관적 락 적용)
-        // SQL: SELECT * FROM users WHERE user_id = ? FOR UPDATE
-        User user = userRepository.findByIdWithLock(userId)
+        // 1. 사용자 조회 (낙관적 락 - @Version 사용)
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         // 2. 충전 전 잔액 저장 (응답용)

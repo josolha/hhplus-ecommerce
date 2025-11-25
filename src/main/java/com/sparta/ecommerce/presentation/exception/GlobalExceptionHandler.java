@@ -7,6 +7,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -76,6 +77,21 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse);
+    }
+
+    /**
+     * 낙관적 락 충돌 예외 처리
+     * 동시성 문제로 데이터 충돌 발생 시
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException e) {
+        ErrorResponse errorResponse = new ErrorResponse(
+            ErrorCode.COMMON003.getCode(),
+            "처리 중 문제가 발생했습니다. 다시 시도해 주세요."
+        );
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)
             .body(errorResponse);
     }
 }
