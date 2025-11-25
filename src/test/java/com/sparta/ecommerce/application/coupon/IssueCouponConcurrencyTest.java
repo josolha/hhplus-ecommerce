@@ -17,9 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,7 +36,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 쿠폰 발급 동시성 테스트
+ * 쿠폰 발급 동시성 테스트 (Redisson 분산 락)
+ *
+ * Testcontainers로 MySQL과 Redis를 실행하여
+ * 실제 분산 락 환경에서 동시성 제어를 검증합니다.
  */
 @SpringBootTest
 @Testcontainers
@@ -46,6 +53,17 @@ public class IssueCouponConcurrencyTest {
             .withUsername("root")
             .withPassword("root")
             .withReuse(true);
+
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
+            .withExposedPorts(6379)
+            .withReuse(true);
+
+    @DynamicPropertySource
+    static void registerRedisProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", redis::getFirstMappedPort);
+    }
 
     @Autowired
     private IssueCouponUseCase issueCouponUseCase;
@@ -134,13 +152,15 @@ public class IssueCouponConcurrencyTest {
         int remainingQuantity = updatedCoupon.getStock().remainingQuantity();
         long actualIssuedCount = userCouponRepository.findByCouponId(limitedCoupon.getCouponId()).size();
 
-        System.out.println("\n=== 쿠폰 동시성 제어 테스트 결과 ===");
+        System.out.println("\n=== [Redisson 분산락] 쿠폰 동시성 제어 테스트 결과 ===");
         System.out.println("초기 재고: 50");
+        System.out.println("동시 요청: 100명");
         System.out.println("발급 성공: " + successCount.get());
         System.out.println("발급 실패: " + failCount.get());
         System.out.println("Coupon.issuedQuantity: " + issuedQuantity);
         System.out.println("Coupon.remainingQuantity: " + remainingQuantity);
         System.out.println("실제 UserCoupon 개수: " + actualIssuedCount);
+        System.out.println("✅ 분산락으로 동시성 제어 성공!");
 
         assertThat(successCount.get()).isEqualTo(50);
         assertThat(failCount.get()).isEqualTo(50);
@@ -187,10 +207,12 @@ public class IssueCouponConcurrencyTest {
                 .filter(uc -> uc.getCouponId().equals(limitedCoupon.getCouponId()))
                 .count();
 
-        System.out.println("\n=== 중복 발급 방지 테스트 결과 ===");
+        System.out.println("\n=== [Redisson 분산락] 중복 발급 방지 테스트 결과 ===");
+        System.out.println("동시 요청: 10회 (같은 사용자)");
         System.out.println("발급 성공: " + successCount.get());
         System.out.println("발급 실패: " + failCount.get());
         System.out.println("실제 발급된 UserCoupon 개수: " + userCouponCount);
+        System.out.println("✅ 중복 발급 방지 성공!");
 
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failCount.get()).isEqualTo(9);
@@ -229,6 +251,7 @@ public class IssueCouponConcurrencyTest {
                     );
                     successCount.incrementAndGet();
                 } catch (Exception e) {
+                    e.printStackTrace();
                     failCount.incrementAndGet();
                 } finally {
                     latch.countDown();
@@ -243,11 +266,13 @@ public class IssueCouponConcurrencyTest {
         Coupon updatedCoupon = couponRepository.findById(lastOneCoupon.getCouponId()).orElseThrow();
         long actualIssuedCount = userCouponRepository.findByCouponId(lastOneCoupon.getCouponId()).size();
 
-        System.out.println("\n=== 마지막 1개 경쟁 테스트 결과 ===");
+        System.out.println("\n=== [Redisson 분산락] 마지막 1개 경쟁 테스트 결과 ===");
         System.out.println("초기 재고: 1");
+        System.out.println("동시 요청: 10명");
         System.out.println("발급 성공: " + successCount.get());
         System.out.println("발급 실패: " + failCount.get());
         System.out.println("실제 발급 개수: " + actualIssuedCount);
+        System.out.println("✅ 마지막 1개 경쟁 제어 성공!");
 
         // 정리
         couponRepository.deleteById(lastOneCoupon.getCouponId());
