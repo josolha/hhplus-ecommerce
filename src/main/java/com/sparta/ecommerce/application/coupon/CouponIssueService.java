@@ -28,7 +28,7 @@ public class CouponIssueService {
      * 쿠폰 발급 비즈니스 로직 (트랜잭션)
      * 분산 락 안에서 실행되어 동시성이 보장됨
      */
-    @Transactional
+
     public UserCouponResponse issue(String userId, String couponId) {
         // 1. 쿠폰 조회
         Coupon coupon = couponRepository.findById(couponId)
