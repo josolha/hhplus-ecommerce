@@ -67,15 +67,15 @@ public class ChargeBalanceConcurrencyTest {
 
     /**
      * 동시성 제어가 적용된 UseCase를 통한 테스트
-     * - @Version 낙관적 락으로 동시성 제어
-     * - 충돌 시 일부만 성공, 나머지는 OptimisticLockException 발생
+     * - Redisson 분산 락으로 동시성 제어
+     * - 모든 요청이 순차적으로 처리되어 100% 성공
      */
     @Nested
     @DisplayName("동시성 제어 검증 - UseCase 사용")
     class ConcurrencyControlTest {
 
         @Test
-        @DisplayName("10번 동시 충전 시 낙관적 락으로 데이터 정합성 보장")
+        @DisplayName("10번 동시 충전 시 분산 락으로 데이터 정합성 보장")
         void chargeBalance_Concurrent_Success() throws InterruptedException {
             // given
             long chargeAmount = 10000L;
@@ -96,7 +96,7 @@ public class ChargeBalanceConcurrencyTest {
                         successCount.incrementAndGet();
                     } catch (Exception e) {
                         failCount.incrementAndGet();
-                        System.out.println("충전 실패 (낙관적 락 충돌): " + e.getClass().getSimpleName());
+                        System.out.println("충전 실패: " + e.getClass().getSimpleName());
                     } finally {
                         latch.countDown();
                     }
@@ -109,22 +109,22 @@ public class ChargeBalanceConcurrencyTest {
             // then
             User updatedUser = userRepository.findById(testUserId).orElseThrow();
             long finalBalance = updatedUser.getBalance().amount();
-            long expectedBalance = chargeAmount * successCount.get();
+            long expectedBalance = chargeAmount * threadCount;
 
-            System.out.println("\n=== 낙관적 락 동시성 제어 테스트 결과 ===");
+            System.out.println("\n=== 분산 락 동시성 제어 테스트 결과 ===");
             System.out.println("성공한 충전 수: " + successCount.get());
             System.out.println("실패한 충전 수: " + failCount.get());
             System.out.println("예상 잔액: " + expectedBalance + "원");
             System.out.println("실제 잔액: " + finalBalance + "원");
 
-            // 낙관적 락: 성공한 요청 수 × 충전 금액 = 실제 잔액
+            // 분산 락: 모든 요청이 성공해야 함
+            assertThat(successCount.get()).isEqualTo(threadCount);
+            assertThat(failCount.get()).isEqualTo(0);
             assertThat(finalBalance).isEqualTo(expectedBalance);
-            // 최소 1개는 성공해야 함
-            assertThat(successCount.get()).isGreaterThanOrEqualTo(1);
         }
 
         @Test
-        @DisplayName("100번 동시 충전 시 낙관적 락으로 데이터 정합성 보장")
+        @DisplayName("100번 동시 충전 시 분산 락으로 데이터 정합성 보장")
         void chargeBalance_MassiveConcurrent_Success() throws InterruptedException {
             // given
             long chargeAmount = 1000L;
@@ -157,19 +157,17 @@ public class ChargeBalanceConcurrencyTest {
             // then
             User updatedUser = userRepository.findById(testUserId).orElseThrow();
             long finalBalance = updatedUser.getBalance().amount();
-            long expectedBalance = chargeAmount * successCount.get();
+            long expectedBalance = chargeAmount * threadCount;
 
-            System.out.println("\n=== 대량 낙관적 락 동시성 제어 테스트 결과 ===");
+            System.out.println("\n=== 대량 분산 락 동시성 제어 테스트 결과 ===");
             System.out.println("성공: " + successCount.get() + ", 실패: " + failCount.get());
             System.out.println("예상 잔액: " + expectedBalance + "원");
             System.out.println("실제 잔액: " + finalBalance + "원");
 
-            // 낙관적 락: 성공한 요청 수 × 충전 금액 = 실제 잔액 (정합성 보장)
+            // 분산 락: 모든 요청이 성공해야 함
+            assertThat(successCount.get()).isEqualTo(threadCount);
+            assertThat(failCount.get()).isEqualTo(0);
             assertThat(finalBalance).isEqualTo(expectedBalance);
-            // 최소 1개는 성공해야 함
-            assertThat(successCount.get()).isGreaterThanOrEqualTo(1);
-            // 대부분 실패 예상 (동시성 충돌)
-            assertThat(failCount.get()).isGreaterThan(0);
         }
     }
 

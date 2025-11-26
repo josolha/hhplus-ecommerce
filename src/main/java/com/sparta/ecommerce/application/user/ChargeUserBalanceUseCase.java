@@ -2,55 +2,30 @@ package com.sparta.ecommerce.application.user;
 
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
-import com.sparta.ecommerce.domain.user.entity.BalanceHistory;
-import com.sparta.ecommerce.domain.user.entity.User;
-
-import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
-import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
-import com.sparta.ecommerce.domain.user.repository.UserRepository;
-import com.sparta.ecommerce.domain.user.vo.Balance;
+import com.sparta.ecommerce.common.aop.annotation.DistributedLock;
+import com.sparta.ecommerce.common.aop.annotation.Trace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 사용자 잔액 충전 UseCase
+ * 사용자 잔액 충전 유스케이스
+ *
+ * 동시성 제어 전략:
+ * - Redisson 분산 락 (Redis 기반)
+ * - 락 키: "LOCK:user:balance:{userId}"
+ * - 락 획득 대기 시간: 10초
+ * - 락 자동 해제 시간: 3초
+ * - 다중 서버 환경에서 안전한 동시성 제어
  */
 @Service
 @RequiredArgsConstructor
 public class ChargeUserBalanceUseCase {
 
-    private final UserRepository userRepository;
-    private final BalanceHistoryRepository balanceHistoryRepository;
+    private final ChargeBalanceService chargeBalanceService;
 
-    @Transactional
+    @Trace
+    @DistributedLock(key = "'user:balance:'.concat(#userId)")
     public ChargeBalanceResponse execute(String userId, ChargeBalanceRequest request) {
-        // 1. 사용자 조회 (낙관적 락 - @Version 사용)
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
-
-        // 2. 충전 전 잔액 저장 (응답용)
-        Balance previousBalance = user.getBalance();
-
-        // 3. 잔액 충전 (도메인 로직)
-        user.chargeBalance(request.amount());
-
-        // 4. 충전 이력 저장
-        balanceHistoryRepository.save(
-                BalanceHistory.builder()
-                        .userId(userId)
-                        .amount(request.amount())
-                        .previousBalance(previousBalance.amount())
-                        .currentBalance(user.getBalance().amount())
-                        .paymentMethod("CARD")  // TODO: 결제 수단을 request에서 받도록 개선
-                        .build()
-        );
-
-        // 5. 변경된 사용자 정보 저장
-        userRepository.save(user);
-
-
-        // 6. 응답 생성
-        return ChargeBalanceResponse.from(user, previousBalance, request.amount());
+        return chargeBalanceService.charge(userId, request);
     }
 }

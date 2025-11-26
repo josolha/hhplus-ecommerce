@@ -53,7 +53,11 @@ public class DistributedLockAop {
                 return false;
             }
 
-            return aopForTransaction.proceed(joinPoint);
+            log.info("=== [트랜잭션 확인] AopForTransaction.proceed() 호출 전 ===");
+            Object result = aopForTransaction.proceed(joinPoint);
+            log.info("=== [트랜잭션 확인] AopForTransaction.proceed() 호출 후 ===");
+
+            return result;
 
         } catch (InterruptedException e) {
             throw new InterruptedException();

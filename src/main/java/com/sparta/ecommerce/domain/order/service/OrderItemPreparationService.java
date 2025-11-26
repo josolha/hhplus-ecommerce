@@ -16,7 +16,7 @@ import java.util.List;
  * 주문 항목 준비 서비스
  *
  * 장바구니 아이템으로부터 주문 항목을 준비하는 도메인 서비스
- * - 재고 확인 및 락 획득
+ * - 재고 확인 (분산 락 환경에서 실행)
  * - OrderItem 생성
  * - 총 금액 계산
  */
@@ -38,8 +38,8 @@ public class OrderItemPreparationService {
         long totalAmount = 0;
 
         for (CartItem cartItem : cartItems) {
-            // 상품 조회 (비관적 락 적용)
-            Product product = productRepository.findByIdWithLock(cartItem.getProductId())
+            // 상품 조회 (분산 락 환경에서 일반 조회)
+            Product product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new ProductNotFoundException(cartItem.getProductId()));
 
             // 재고 확인
