@@ -62,6 +62,9 @@ public class PaymentService {
     /**
      * 잔액 결제 처리
      *
+     * 주의: 이 메서드는 OrderFacade에서 호출되며,
+     * CreateOrderUseCase의 분산 락 안에서 실행됩니다.
+     *
      * @param order 주문 정보
      * @return 결제 결과
      */
@@ -75,7 +78,7 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         try {
-            // 2. 사용자 조회 (낙관적 락 - @Version 사용)
+            // 2. 사용자 조회 (분산 락 환경에서 일반 조회)
             User user = userRepository.findById(order.getUserId())
                     .orElseThrow(() -> new PaymentFailedException("사용자를 찾을 수 없습니다"));
 

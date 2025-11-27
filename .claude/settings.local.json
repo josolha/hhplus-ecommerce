@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/josolha/Desktop/코드/스파르타 강의/스파르타_과제/2주차/ecommerce-core/src/main/java/com/sparta/ecommerce/domain/user/entity/**)",
+      "Read(//Users/josolha/Desktop/코드/스파르타 강의/스파르타_과제/2주차/ecommerce-core/src/main/java/com/sparta/ecommerce/domain/user/repository/**)",
+      "Read(//Users/josolha/Desktop/코드/스파르타 강의/스파르타_과제/2주차/ecommerce-core/src/main/java/com/sparta/ecommerce/application/user/**)",
+      "Read(//Users/josolha/Desktop/코드/스파르타 강의/스파르타_과제/2주차/ecommerce-core/src/main/java/com/sparta/ecommerce/domain/user/vo/**)",
+      "Read(//Users/josolha/Desktop/코드/스파르타 강의/스파르타_과제/2주차/ecommerce-core/**)",
+      "Read(//Users/josolha/Desktop/코드/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
