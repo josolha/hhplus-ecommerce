@@ -259,7 +259,7 @@ public class DataSeeder {
     private void seedTestUsers() {
         System.out.println("테스트 유저 생성 중...");
 
-        String sql = "INSERT INTO users (id, name, email, balance, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (id, name, email, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
 
         int testUserCount = 100;
 
@@ -272,9 +272,8 @@ public class DataSeeder {
                 ps.setString(2, "테스트유저" + (i + 1));
                 ps.setString(3, "testuser" + (i + 1) + "@test.com");
                 ps.setLong(4, 1_000_000); // 100만원
-                ps.setLong(5, 0L); // version
+                ps.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
                 ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
-                ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
             }
 
             @Override
