@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
  *
  * 동시성 제어 전략:
  * - Redisson 분산 락 (Redis 기반)
- * - 락 키: "LOCK:order:global" (전역 주문 락)
+ * - 락 키: "lock:order:global" (전역 주문 락)
  * - 락 획득 대기 시간: 10초
  * - 락 자동 해제 시간: 3초
  * - 다중 서버 환경에서 안전한 동시성 제어

@@ -34,10 +34,11 @@ public class CacheConfig {
 
     /**
      * 캐시 이름 상수
+     * cache: prefix로 분산 락과 명확히 구분
      */
-    public static final String POPULAR_PRODUCTS = "popularProducts";
-    public static final String PRODUCT_DETAIL = "productDetail";
-    public static final String PRODUCT_LIST = "productList";
+    public static final String POPULAR_PRODUCTS = "cache:popularProducts";
+    public static final String PRODUCT_DETAIL = "cache:productDetail";
+    public static final String PRODUCT_LIST = "cache:productList";
 
     /**
      * Redis 캐시 매니저 설정
@@ -61,17 +62,17 @@ public class CacheConfig {
         // 캐시별 TTL 설정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
-        // 인기 상품: 5분 TTL
+        // 인기 상품: 30분 TTL
         cacheConfigurations.put(POPULAR_PRODUCTS,
-                defaultConfig.entryTtl(Duration.ofMinutes(5)));
+                defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
         // 상품 상세: 10분 TTL
         cacheConfigurations.put(PRODUCT_DETAIL,
                 defaultConfig.entryTtl(Duration.ofMinutes(10)));
 
-        // 상품 목록: 5분 TTL
+        // 상품 목록: 10분 TTL
         cacheConfigurations.put(PRODUCT_LIST,
-                defaultConfig.entryTtl(Duration.ofMinutes(5)));
+                defaultConfig.entryTtl(Duration.ofMinutes(10)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
@@ -82,11 +83,21 @@ public class CacheConfig {
     /**
      * ObjectMapper 설정
      * LocalDateTime 직렬화 지원
+     * Record 타입 역직렬화 지원
      */
     private ObjectMapper objectMapper() {
+        // 타입 검증 설정 (보안 + Record 지원)
+        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .build();
+
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // 타입 정보를 포함하여 직렬화 (Record 역직렬화 지원)
+        mapper.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.NON_FINAL);
+
         return mapper;
     }
 }
