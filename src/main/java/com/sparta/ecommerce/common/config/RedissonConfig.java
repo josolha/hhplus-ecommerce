@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.infrastructure.config;
+package com.sparta.ecommerce.common.config;
 
 
 import org.redisson.Redisson;
