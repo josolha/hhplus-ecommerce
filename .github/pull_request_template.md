@@ -1,113 +1,113 @@
-## 📌 PR 제목
-[STEP11,12] Redis 분산 락 및 캐시 적용 (e-commerce)
+## :pushpin: PR 제목 규칙
+[STEP13-14] Redis 기반 랭킹 및 비동기 쿠폰 발급
+
+---
+## :memo: 작업 내용
+
+### STEP 13: Redis Sorted Set 실시간 랭킹
+- [x] Redis Sorted Set으로 실시간 인기 상품 랭킹 구현
+- [x] DB 집계 쿼리 제거 (17.5초 → 0.7초, 96% 개선)
+- [x] 주문 시 ZINCRBY로 즉시 랭킹 업데이트
+- [x] ZUNIONSTORE + ZREVRANGE로 최근 N일 Top 상품 조회
+- [x] Redis 장애 시 DB Fallback 구현
+
+**성능 비교 테스트:**
+- DB 집계: 17,520ms
+- Spring Cache: 6.5ms (실시간 X)
+- Redis 랭킹: 697ms (실시간 O) ✅ 선택
 
 ---
 
-## ✅ 구현 내용
+### STEP 14: Redis Blocking Queue 비동기 쿠폰 발급
+- [x] 기존 **분산 락 방식 제거** (순서 보장 안됨 + 느림)
+- [x] Redis BRPOP 기반 비동기 큐 구현
+- [x] 응답 속도 99% 개선 (5~10초 → 50ms)
+- [x] FIFO 순서 보장 추가
+- [x] Worker 스레드 3개로 백그라운드 처리
+- [x] Redis Set으로 중복 발급 방지
 
-### STEP11: Redis 분산 락 적용
-- [x] Redis 분산락 적용
-- [x] AOP 기반 분산 락 구현 (@DistributedLock)
-- [x] 트랜잭션 순서와 락 순서 보장 (Propagation.REQUIRES_NEW)
-- [x] Test Container 구성 (MySQL, Redis)
-- [x] 기능별 통합 테스트 작성
-  - 쿠폰 발급 동시성 테스트
-  - 잔액 충전 동시성 테스트
-  - 주문 생성 동시성 테스트
-
-### STEP12: Redis 캐시 적용
-- [x] 캐시 필요 부분 분석
-  - 인기 상품 조회 (집계 쿼리)
-  - 상품 상세 조회
-  - 상품 목록 조회
-- [x] Redis 기반 Cache-Aside 패턴 적용
-- [x] 적절한 캐시 키 설계
-  - `popularProducts::{days}:{limit}`
-  - `productDetail::{productId}`
-  - `productList::{category}:{sort}`
-- [x] TTL 설정 (인기 상품/목록: 5분, 상세: 10분)
-- [x] 성능 개선 측정 및 보고서 작성
-  - 인기 상품 조회: 95% 개선 (120ms → 6.5ms)
-  - 상품 목록 조회: 73% 개선 (15ms → 4ms)
-  - DB 쿼리 90% 감소
+**기술 선택 과정:**
+- Polling: CPU 낭비 ❌
+- Pub/Sub: 메시지 유실 위험 ❌
+- **BRPOP: FIFO + 메시지 안정성** ✅ 선택
 
 ---
 
-## 🧪 테스트 결과
+## :white_check_mark: 핵심 체크리스트
 
-### 동시성 테스트 (7개 모두 통과)
-- ✅ 쿠폰 발급 동시성 (100명 → 50명 성공, 재고 정확)
-- ✅ 잔액 충전 동시성 (10회 충전 모두 반영)
-- ✅ 주문 생성 동시성 (재고 차감 정확)
-- ✅ 상품 재고 차감 동시성 (오버셀링 방지)
-- ✅ 캐시 성능 테스트 (평균 77% 성능 개선)
+### 1. Ranking Design
+- [x] Redis Sorted Set 선택 이유를 명확히 설명
+- [x] DB 집계 / Spring Cache / Redis 랭킹 비교
+- [x] 실시간성 우선 순위 고려
+- [x] 성능 측정 데이터 포함 (PERFORMANCE_COMPARISON.md)
 
-### 성능 개선 측정
+### 2. Asynchronous Design
+- [x] **분산 락 제거** 및 Redis Queue로 전환
+- [x] Polling / Pub/Sub / BRPOP 비교
+- [x] FIFO 순서 보장 구현
+- [x] Worker 패턴으로 비동기 처리
+- [x] 메시지 안정성 확보 (Redis 영속성)
+
+### 3. 통합 테스트
+- [x] Testcontainers로 Redis + MySQL 독립 테스트 환경
+- [x] 8개 동시성 테스트 모두 통과
+  - BlockingQueueCouponTest (5개)
+  - CouponQueueConcurrencyTest (3개)
+- [x] 재고 정확성 100% 검증
+- [x] FIFO 순서 보장 검증
+
+---
+
+## :chart_with_upwards_trend: 성능 개선 결과
+
+| 기능 | 기존 | 개선 | 개선율 |
+|------|------|------|--------|
+| 인기 상품 조회 | 17,520ms | 697ms | 96% |
+| 쿠폰 발급 응답 | 5~10초 | 50ms | 99% |
+| DB 부하 | 매우 높음 | 낮음 | 95% |
+| 처리 스레드 | 1000개 | 3개 | 99.7% |
+| **순서 보장** | ❌ | ✅ | - |
+
+---
+
+## :bulb: 회고
+
+### 잘한 점
+- 각 기술(DB 집계, Cache, Sorted Set / Polling, Pub/Sub, BRPOP)을 직접 비교하여 장단점 파악
+- 분산 락의 한계(순서 보장 안됨)를 명확히 인식하고 Redis Queue로 전환
+- 8개 테스트로 동시성, 재고 정확성, FIFO 순서 모두 검증
+
+### 어려웠던 점
+- **Redis Blocking Queue(BRPOP) 개념이 생소함**
+  - Blocking 방식이 어떻게 동작하는지 처음엔 이해가 어려웠음
+  - Worker 스레드가 큐를 어떻게 계속 모니터링하는지 감이 안 잡힘
+  - Pub/Sub과의 차이(메시지 유실 vs 영속성)를 실제로 겪어봐야 체감될 것 같음
+- CouponStock을 record에서 class로 변경하는 과정에서 JPA 호환성 이슈
+- 테스트에서 UUID 자동 생성과 수동 ID 할당 충돌 문제
+
+### 다음 시도
+- **Blocking Queue 패턴을 더 깊이 학습**하여 실무에서 활용할 수 있도록
+- WebSocket/SSE로 쿠폰 발급 완료 알림 기능 추가
+- Redis Cluster 구성하여 고가용성 확보
+- 상품 정보 캐싱 추가로 697ms → 170ms 추가 개선
+
+---
+
+## :page_facing_up: 관련 문서
+- [README.md](../README.md) - 전체 기술 보고서
+- https://josolha.tistory.com/75 -Redis 직렬화 문제 해결 
+---
+
+## :rocket: 테스트 실행 방법
+
+```bash
+# 전체 테스트
+./gradlew test
+
+# 랭킹 성능 테스트
+./gradlew test --tests RankingPerformanceComparisonTest
+
+# 쿠폰 동시성 테스트
+./gradlew test --tests BlockingQueueCouponTest
+./gradlew test --tests CouponQueueConcurrencyTest
 ```
-[인기 상품 조회]
-- Cache Miss: 120ms
-- Cache Hit: 6.5ms
-- 개선율: 95%
-
-[상품 목록 조회]
-- Cache Miss: 15ms
-- Cache Hit: 4ms
-- 개선율: 73%
-```
-
----
-
-## 📝 핵심 체크리스트
-
-### 1️⃣ 분산락 적용
-- [x] 적절한 곳에 분산락이 사용되었는가?
-  - 쿠폰 발급 (선착순)
-  - 잔액 충전/차감
-  - 주문 생성 (전역 락)
-- [x] 트랜잭션 순서와 락 순서가 보장되었는가?
-  - `AopForTransaction`으로 트랜잭션 분리
-  - `REQUIRES_NEW`로 트랜잭션 커밋 → 락 해제 순서 보장
-
-### 2️⃣ 통합 테스트
-- [x] Infrastructure 레이어를 포함하는 통합 테스트가 작성되었는가?
-  - Testcontainers (MySQL, Redis) 사용
-- [x] 핵심 기능에 대한 흐름이 테스트에서 검증되었는가?
-  - 쿠폰 발급, 잔액 충전, 주문 생성 전체 플로우 테스트
-- [x] 동시성을 검증할 수 있는 테스트코드로 작성되었는가?
-  - ExecutorService + CountDownLatch 사용
-  - 100개 동시 요청 시뮬레이션
-- [x] Test Container가 적용되었는가?
-  - MySQL 8.0, Redis 컨테이너 자동 실행
-
-### 3️⃣ Cache 적용
-- [x] 적절하게 Key 적용이 되었는가?
-  - SpEL 표현식 사용
-  - 파라미터 조합으로 고유 키 생성
-  - null 처리 (Elvis 연산자)
-
----
-
-## 📚 문서화
-- [x] README.md 통합 작성
-  - 분산 락 전략 설명 (AOP 구현 상세)
-  - 캐시 전략 비교 및 선택 이유
-  - 성능 측정 결과 포함
-
----
-
-## 💭 간단 회고
-
-**잘한 점:**
-- AOP 패턴으로 분산 락을 구현하여 코드 77% 단순화 달성
-- Cache-Aside 패턴 적용으로 평균 77% 성능 개선 확인
-- 실제 성능 테스트를 통해 개선 효과를 정량적으로 측정
-
-**어려운 점:**
-- 트랜잭션 커밋과 락 해제 순서를 보장하는 메커니즘 이해
-- Redis 직렬화 설정 (GenericJackson2JsonRedisSerializer)
-- 캐시 키 설계 시 null 처리 및 Elvis 연산자 활용
-
-**다음 시도:**
-- 캐시 무효화 전략 (@CacheEvict) 적용
-- Cache Warming 구현 (서버 시작 시 인기 데이터 미리 캐싱)
-- Redis 메모리 사용량 모니터링 구현
