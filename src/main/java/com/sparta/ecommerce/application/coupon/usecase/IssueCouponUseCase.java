@@ -1,5 +1,6 @@
-package com.sparta.ecommerce.application.coupon;
+package com.sparta.ecommerce.application.coupon.usecase;
 
+import com.sparta.ecommerce.application.coupon.service.CouponIssueService;
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
 import com.sparta.ecommerce.common.aop.annotation.DistributedLock;
 import com.sparta.ecommerce.common.aop.annotation.Trace;

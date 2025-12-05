@@ -43,8 +43,8 @@ public record CouponResponse(
                 coupon.getName(),
                 coupon.getDiscountType(),
                 coupon.getDiscountValue(),
-                coupon.getStock().totalQuantity(),
-                coupon.getStock().remainingQuantity(),
+                coupon.getStock().getTotalQuantity(),
+                coupon.getStock().getRemainingQuantity(),
                 coupon.getMinOrderAmount(),
                 coupon.getExpiresAt()
         );

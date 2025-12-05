@@ -20,8 +20,8 @@ class CouponStockTest {
         CouponStock stock = new CouponStock(100, 50, 50);
 
         // then
-        assertThat(stock.totalQuantity()).isEqualTo(100);
-        assertThat(stock.remainingQuantity()).isEqualTo(50);
+        assertThat(stock.getTotalQuantity()).isEqualTo(100);
+        assertThat(stock.getRemainingQuantity()).isEqualTo(50);
     }
 
     @Test
@@ -61,9 +61,9 @@ class CouponStockTest {
         CouponStock issuedStock = stock.issue();
 
         // then
-        assertThat(issuedStock.totalQuantity()).isEqualTo(100);
-        assertThat(issuedStock.remainingQuantity()).isEqualTo(49);
-        assertThat(stock.remainingQuantity()).isEqualTo(50); // 불변성 확인
+        assertThat(issuedStock.getTotalQuantity()).isEqualTo(100);
+        assertThat(issuedStock.getRemainingQuantity()).isEqualTo(49);
+        assertThat(stock.getRemainingQuantity()).isEqualTo(50); // 불변성 확인
     }
 
     @Test
@@ -177,7 +177,7 @@ class CouponStockTest {
         CouponStock stock = new CouponStock(100, 70, 30);
 
         // when
-        int issuedQuantity = stock.issuedQuantity();
+        int issuedQuantity = stock.getIssuedQuantity();
 
         // then
         assertThat(issuedQuantity).isEqualTo(70); // 100 - 30 = 70
@@ -195,9 +195,9 @@ class CouponStockTest {
         CouponStock stock3 = stock2.issue();
 
         // then
-        assertThat(stock1.remainingQuantity()).isEqualTo(2);
-        assertThat(stock2.remainingQuantity()).isEqualTo(1);
-        assertThat(stock3.remainingQuantity()).isEqualTo(0);
+        assertThat(stock1.getRemainingQuantity()).isEqualTo(2);
+        assertThat(stock2.getRemainingQuantity()).isEqualTo(1);
+        assertThat(stock3.getRemainingQuantity()).isEqualTo(0);
         assertThat(stock3.isOutOfStock()).isTrue();
 
         // 다음 발급은 실패

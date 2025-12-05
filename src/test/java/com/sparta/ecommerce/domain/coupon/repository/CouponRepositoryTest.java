@@ -50,8 +50,8 @@ public class CouponRepositoryTest extends IntegrationTestBase {
         assertThat(foundCoupon.getName()).isEqualTo("5000원 할인쿠폰");
         assertThat(foundCoupon.getDiscountType()).isEqualTo(DiscountType.FIXED);
         assertThat(foundCoupon.getDiscountValue()).isEqualTo(5000L);
-        assertThat(foundCoupon.getStock().totalQuantity()).isEqualTo(100);
-        assertThat(foundCoupon.getStock().remainingQuantity()).isEqualTo(100);
+        assertThat(foundCoupon.getStock().getTotalQuantity()).isEqualTo(100);
+        assertThat(foundCoupon.getStock().getRemainingQuantity()).isEqualTo(100);
     }
 
     @Test
@@ -108,8 +108,8 @@ public class CouponRepositoryTest extends IntegrationTestBase {
 
         // then
         Coupon result = couponRepository.findById(coupon.getCouponId()).get();
-        assertThat(result.getStock().remainingQuantity()).isEqualTo(99);
-        assertThat(result.getStock().issuedQuantity()).isEqualTo(1);
+        assertThat(result.getStock().getRemainingQuantity()).isEqualTo(99);
+        assertThat(result.getStock().getIssuedQuantity()).isEqualTo(1);
     }
 
     @Test
@@ -205,7 +205,7 @@ public class CouponRepositoryTest extends IntegrationTestBase {
 
         // then
         Coupon foundCoupon = couponRepository.findById(savedCoupon.getCouponId()).get();
-        assertThat(foundCoupon.getStock().remainingQuantity()).isEqualTo(0);
+        assertThat(foundCoupon.getStock().getRemainingQuantity()).isEqualTo(0);
         assertThat(foundCoupon.getStock().isOutOfStock()).isTrue();
     }
 

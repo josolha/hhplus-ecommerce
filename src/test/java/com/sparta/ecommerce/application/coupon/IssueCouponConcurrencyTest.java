@@ -1,6 +1,7 @@
 package com.sparta.ecommerce.application.coupon;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
+import com.sparta.ecommerce.application.coupon.usecase.IssueCouponUseCase;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
@@ -148,8 +149,8 @@ public class IssueCouponConcurrencyTest {
 
         // then
         Coupon updatedCoupon = couponRepository.findById(limitedCoupon.getCouponId()).orElseThrow();
-        int issuedQuantity = updatedCoupon.getStock().issuedQuantity();
-        int remainingQuantity = updatedCoupon.getStock().remainingQuantity();
+        int issuedQuantity = updatedCoupon.getStock().getIssuedQuantity();
+        int remainingQuantity = updatedCoupon.getStock().getRemainingQuantity();
         long actualIssuedCount = userCouponRepository.findByCouponId(limitedCoupon.getCouponId()).size();
 
         System.out.println("\n=== [Redisson 분산락] 쿠폰 동시성 제어 테스트 결과 ===");

@@ -5,6 +5,7 @@ import com.sparta.ecommerce.domain.common.exception.BusinessException;
 import com.sparta.ecommerce.domain.common.exception.ErrorCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * 전역 예외 처리 핸들러
  * 모든 예외를 HTTP 응답으로 변환
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -37,6 +39,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
+        log.error("서버 내부 오류 발생", e);
         ErrorResponse errorResponse = new ErrorResponse(
             ErrorCode.COMMON004.getCode(),
             "서버 내부 오류가 발생했습니다"
