@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.coupon;
+package com.sparta.ecommerce.application.coupon.usecase;
 
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponResponse;

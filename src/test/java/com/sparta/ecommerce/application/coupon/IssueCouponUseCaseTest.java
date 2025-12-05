@@ -1,6 +1,7 @@
 package com.sparta.ecommerce.application.coupon;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
+import com.sparta.ecommerce.application.coupon.usecase.IssueCouponUseCase;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
@@ -13,7 +14,6 @@ import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

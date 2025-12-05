@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.coupon;
+package com.sparta.ecommerce.application.coupon.service;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
@@ -11,7 +11,6 @@ import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 쿠폰 발급 트랜잭션 처리 서비스

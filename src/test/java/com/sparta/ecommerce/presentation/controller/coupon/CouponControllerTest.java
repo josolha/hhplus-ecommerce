@@ -1,8 +1,8 @@
 package com.sparta.ecommerce.presentation.controller.coupon;
 
-import com.sparta.ecommerce.application.coupon.GetAvailableCouponsUseCase;
-import com.sparta.ecommerce.application.coupon.IssueCouponUseCase;
-import com.sparta.ecommerce.application.coupon.ValidateCouponUseCase;
+import com.sparta.ecommerce.application.coupon.usecase.GetAvailableCouponsUseCase;
+import com.sparta.ecommerce.application.coupon.usecase.IssueCouponUseCase;
+import com.sparta.ecommerce.application.coupon.usecase.ValidateCouponUseCase;
 import com.sparta.ecommerce.application.coupon.dto.CouponResponse;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
 import org.junit.jupiter.api.DisplayName;

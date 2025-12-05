@@ -3,27 +3,42 @@ package com.sparta.ecommerce.domain.coupon.vo;
 import com.sparta.ecommerce.domain.coupon.exception.CouponSoldOutException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 쿠폰 재고 Value Object
  * 쿠폰의 총 수량, 발급된 수량, 남은 수량을 관리하고, 발급 관련 비즈니스 로직을 캡슐화
  */
 @Embeddable
-public record CouponStock(
-        @Column(name = "total_quantity", nullable = false)
-        int totalQuantity,
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+public class CouponStock {
 
-        @Column(name = "issued_quantity", nullable = false)
-        int issuedQuantity,
+    @Column(name = "total_quantity", nullable = false)
+    private int totalQuantity;
 
-        @Column(name = "remaining_quantity", nullable = false)
-        int remainingQuantity
-) {
+    @Column(name = "issued_quantity", nullable = false)
+    private int issuedQuantity;
+
+    @Column(name = "remaining_quantity", nullable = false)
+    private int remainingQuantity;
 
     /**
-     * Compact constructor - 유효성 검증
+     * 정적 팩토리 메서드 - 유효성 검증 포함
      */
-    public CouponStock {
+    public static CouponStock of(int totalQuantity, int issuedQuantity, int remainingQuantity) {
+        validate(totalQuantity, issuedQuantity, remainingQuantity);
+        return new CouponStock(totalQuantity, issuedQuantity, remainingQuantity);
+    }
+
+    /**
+     * 유효성 검증
+     */
+    private static void validate(int totalQuantity, int issuedQuantity, int remainingQuantity) {
         if (totalQuantity < 0) {
             throw new IllegalArgumentException("총 수량은 음수일 수 없습니다");
         }
