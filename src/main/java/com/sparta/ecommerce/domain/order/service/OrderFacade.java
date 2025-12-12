@@ -16,8 +16,8 @@ import com.sparta.ecommerce.domain.payment.service.PaymentService;
 import com.sparta.ecommerce.domain.product.entity.Product;
 import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,6 +29,7 @@ import java.util.List;
  * - 트랜잭션 경계 관리
  * - 복잡한 비즈니스 흐름 단순화
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderFacade {
@@ -45,6 +46,9 @@ public class OrderFacade {
 
     /**
      * 주문 생성 전체 흐름
+     *
+     * 순수한 도메인 로직만 처리
+     * 트랜잭션 관리와 이벤트 발행은 Application Layer에서 담당
      *
      * @param userId 사용자 ID
      * @param couponId 쿠폰 ID (nullable)
@@ -73,6 +77,7 @@ public class OrderFacade {
         // 5. 주문 생성
         Order order = createOrderEntity(userId, couponId, preparation.totalAmount(), discountAmount, finalAmount);
 
+        log.info("order : ",order.getOrderId());
         // 6. 결제 처리
         Payment payment = paymentService.processPayment(order, PaymentMethod.BALANCE);
 
@@ -80,16 +85,7 @@ public class OrderFacade {
         applyCoupon(userId, couponId);
 
         // 8. 장바구니 비우기
-        try {
-            cartItemRepository.deleteByCartId(cart.getCartId());
-        } catch (Exception e) {
-            System.err.println("=== 장바구니 삭제 에러 ===");
-            System.err.println("Cart ID: " + cart.getCartId());
-            System.err.println("Exception: " + e.getClass().getName());
-            System.err.println("Message: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        cartItemRepository.deleteByCartId(cart.getCartId());
 
         return new OrderResult(order, preparation.orderItems());
     }

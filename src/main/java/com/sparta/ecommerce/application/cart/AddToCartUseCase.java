@@ -80,9 +80,7 @@ public class AddToCartUseCase {
      * 새 장바구니 생성
      */
     private Cart createNewCart(String userId) {
-        String cartId = "CART_" + userId;
         return Cart.builder()
-                .cartId(cartId)
                 .userId(userId)
                 .build();
     }
