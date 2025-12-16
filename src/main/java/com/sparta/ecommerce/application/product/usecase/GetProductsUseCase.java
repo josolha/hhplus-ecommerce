@@ -10,7 +10,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.sparta.ecommerce.common.config.CacheConfig.PRODUCT_LIST;
+import static com.sparta.ecommerce.infrastructure.config.CacheConfig.PRODUCT_LIST;
 
 /**
  * 상품 목록 조회 UseCase
