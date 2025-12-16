@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.domain.common;
+package com.sparta.ecommerce.infrastructure.jpa;
 
 
 import jakarta.persistence.Column;

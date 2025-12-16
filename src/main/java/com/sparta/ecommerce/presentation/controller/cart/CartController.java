@@ -1,9 +1,9 @@
 package com.sparta.ecommerce.presentation.controller.cart;
 
-import com.sparta.ecommerce.application.cart.AddToCartUseCase;
-import com.sparta.ecommerce.application.cart.GetCartUseCase;
-import com.sparta.ecommerce.application.cart.RemoveFromCartUseCase;
-import com.sparta.ecommerce.application.cart.UpdateCartItemUseCase;
+import com.sparta.ecommerce.application.cart.usecase.AddToCartUseCase;
+import com.sparta.ecommerce.application.cart.usecase.GetCartUseCase;
+import com.sparta.ecommerce.application.cart.usecase.RemoveFromCartUseCase;
+import com.sparta.ecommerce.application.cart.usecase.UpdateCartItemUseCase;
 import com.sparta.ecommerce.application.cart.dto.AddToCartRequest;
 import com.sparta.ecommerce.application.cart.dto.CartItemResponse;
 import com.sparta.ecommerce.application.cart.dto.CartResponse;

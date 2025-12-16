@@ -1,8 +1,8 @@
 package com.sparta.ecommerce.presentation.controller.order;
 
-import com.sparta.ecommerce.application.order.CreateOrderUseCase;
-import com.sparta.ecommerce.application.order.GetOrderDetailUseCase;
-import com.sparta.ecommerce.application.order.GetOrdersUseCase;
+import com.sparta.ecommerce.application.order.usecase.CreateOrderUseCase;
+import com.sparta.ecommerce.application.order.usecase.GetOrderDetailUseCase;
+import com.sparta.ecommerce.application.order.usecase.GetOrdersUseCase;
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

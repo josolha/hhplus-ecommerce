@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.user;
+package com.sparta.ecommerce.application.user.service;
 
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;

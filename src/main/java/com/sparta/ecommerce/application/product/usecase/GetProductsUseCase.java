@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.product;
+package com.sparta.ecommerce.application.product.usecase;
 
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.domain.product.entity.Product;

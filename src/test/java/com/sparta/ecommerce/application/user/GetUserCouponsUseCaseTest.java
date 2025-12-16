@@ -1,6 +1,7 @@
 package com.sparta.ecommerce.application.user;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
+import com.sparta.ecommerce.application.user.usecase.GetUserCouponsUseCase;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.CouponStatus;

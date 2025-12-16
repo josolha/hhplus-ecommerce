@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.*;
 
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
+import com.sparta.ecommerce.application.user.usecase.ChargeUserBalanceUseCase;
 import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;

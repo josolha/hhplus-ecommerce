@@ -1,6 +1,7 @@
-package com.sparta.ecommerce.application.product;
+package com.sparta.ecommerce.application.product.usecase;
 
 
+import com.sparta.ecommerce.application.product.service.ProductRankingService;
 import com.sparta.ecommerce.application.product.dto.PopularProductResponse;
 import com.sparta.ecommerce.domain.order.repository.OrderItemRepository;
 import com.sparta.ecommerce.domain.product.entity.Product;

@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.common.aop;
+package com.sparta.ecommerce.infrastructure.aop;
 
 
 import lombok.extern.slf4j.Slf4j;

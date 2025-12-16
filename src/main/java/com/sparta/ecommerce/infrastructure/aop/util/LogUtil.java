@@ -1,8 +1,8 @@
-package com.sparta.ecommerce.common.aop.util;
+package com.sparta.ecommerce.infrastructure.aop.util;
 
 
-import com.sparta.ecommerce.common.aop.logtrace.TraceId;
-import com.sparta.ecommerce.common.aop.logtrace.TraceIdHolder;
+import com.sparta.ecommerce.infrastructure.aop.logtrace.TraceId;
+import com.sparta.ecommerce.infrastructure.aop.logtrace.TraceIdHolder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

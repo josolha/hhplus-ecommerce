@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.common.aop.annotation;
+package com.sparta.ecommerce.infrastructure.aop.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

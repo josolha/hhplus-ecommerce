@@ -1,9 +1,9 @@
 package com.sparta.ecommerce.presentation.controller.product;
 
-import com.sparta.ecommerce.application.product.GetProductStockUseCase;
-import com.sparta.ecommerce.application.product.GetProductDetailUseCase;
-import com.sparta.ecommerce.application.product.GetProductsUseCase;
-import com.sparta.ecommerce.application.product.GetPopularProductsUseCase;
+import com.sparta.ecommerce.application.product.usecase.GetProductStockUseCase;
+import com.sparta.ecommerce.application.product.usecase.GetProductDetailUseCase;
+import com.sparta.ecommerce.application.product.usecase.GetProductsUseCase;
+import com.sparta.ecommerce.application.product.usecase.GetPopularProductsUseCase;
 import com.sparta.ecommerce.application.product.dto.PopularProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductStockResponse;
@@ -18,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 상품 관리 API

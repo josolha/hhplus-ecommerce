@@ -1,7 +1,8 @@
-package com.sparta.ecommerce.application.user;
+package com.sparta.ecommerce.application.user.usecase;
 
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
+import com.sparta.ecommerce.application.user.service.ChargeBalanceService;
 import com.sparta.ecommerce.infrastructure.aop.annotation.DistributedLock;
 import com.sparta.ecommerce.infrastructure.aop.annotation.Trace;
 import lombok.RequiredArgsConstructor;

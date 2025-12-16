@@ -1,7 +1,7 @@
 package com.sparta.ecommerce.application.user;
 
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
-import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
+import com.sparta.ecommerce.application.user.usecase.ChargeUserBalanceUseCase;
 import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.vo.Balance;

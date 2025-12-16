@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.domain.cart.entity;
 
-import com.sparta.ecommerce.domain.common.BaseEntity;
+import com.sparta.ecommerce.infrastructure.jpa.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

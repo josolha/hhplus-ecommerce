@@ -1,8 +1,8 @@
 package com.sparta.ecommerce.presentation.exception;
 
 
-import com.sparta.ecommerce.domain.common.exception.BusinessException;
-import com.sparta.ecommerce.domain.common.exception.ErrorCode;
+import com.sparta.ecommerce.common.exception.BusinessException;
+import com.sparta.ecommerce.common.exception.ErrorCode;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;

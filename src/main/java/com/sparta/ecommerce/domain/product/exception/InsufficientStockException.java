@@ -1,7 +1,7 @@
 package com.sparta.ecommerce.domain.product.exception;
 
-import com.sparta.ecommerce.domain.common.exception.BusinessException;
-import com.sparta.ecommerce.domain.common.exception.ErrorCode;
+import com.sparta.ecommerce.common.exception.BusinessException;
+import com.sparta.ecommerce.common.exception.ErrorCode;
 
 /**
  * 재고가 부족할 때 발생하는 예외

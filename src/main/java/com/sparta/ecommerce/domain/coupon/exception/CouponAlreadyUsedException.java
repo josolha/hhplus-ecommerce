@@ -1,8 +1,8 @@
 package com.sparta.ecommerce.domain.coupon.exception;
 
 
-import com.sparta.ecommerce.domain.common.exception.BusinessException;
-import com.sparta.ecommerce.domain.common.exception.ErrorCode;
+import com.sparta.ecommerce.common.exception.BusinessException;
+import com.sparta.ecommerce.common.exception.ErrorCode;
 
 /**
  * 이미 사용된 쿠폰일 때 발생하는 예외

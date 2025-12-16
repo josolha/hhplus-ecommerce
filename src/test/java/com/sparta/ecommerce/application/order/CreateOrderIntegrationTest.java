@@ -2,6 +2,7 @@ package com.sparta.ecommerce.application.order;
 
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
+import com.sparta.ecommerce.application.order.usecase.CreateOrderUseCase;
 import com.sparta.ecommerce.domain.cart.entity.Cart;
 import com.sparta.ecommerce.domain.cart.entity.CartItem;
 import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

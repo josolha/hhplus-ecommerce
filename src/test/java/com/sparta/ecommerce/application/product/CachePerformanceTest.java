@@ -2,6 +2,9 @@ package com.sparta.ecommerce.application.product;
 
 import com.sparta.ecommerce.application.product.dto.PopularProductResponse;
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
+import com.sparta.ecommerce.application.product.usecase.GetPopularProductsUseCase;
+import com.sparta.ecommerce.application.product.usecase.GetProductDetailUseCase;
+import com.sparta.ecommerce.application.product.usecase.GetProductsUseCase;
 import com.sparta.ecommerce.domain.order.OrderStatus;
 import com.sparta.ecommerce.domain.order.entity.Order;
 import com.sparta.ecommerce.domain.order.entity.OrderItem;
@@ -23,7 +26,6 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
