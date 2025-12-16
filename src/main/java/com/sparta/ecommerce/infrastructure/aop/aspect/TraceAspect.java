@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.common.aop.aspect;
+package com.sparta.ecommerce.infrastructure.aop.aspect;
 
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TraceAspect {
 
-    @Before("@annotation(com.sparta.ecommerce.common.aop.annotation.Trace)")
+    @Before("@annotation(com.sparta.ecommerce.infrastructure.aop.annotation.Trace)")
     public void doTrace(JoinPoint joinPoint) {
         Object[] args = joinPoint.getArgs();
         log.info("==============================[EXECU]{}==============================",joinPoint.getSignature().toShortString());

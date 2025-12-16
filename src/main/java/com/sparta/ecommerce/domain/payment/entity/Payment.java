@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.domain.payment.entity;
 
-import com.sparta.ecommerce.domain.common.BaseEntity;
+import com.sparta.ecommerce.infrastructure.jpa.BaseEntity;
 import com.sparta.ecommerce.domain.payment.PaymentMethod;
 import com.sparta.ecommerce.domain.payment.PaymentStatus;
 import jakarta.persistence.Column;

@@ -1,14 +1,11 @@
-package com.sparta.ecommerce.application.order;
+package com.sparta.ecommerce.application.order.listener;
 
-import com.sparta.ecommerce.domain.order.entity.Order;
 import com.sparta.ecommerce.domain.order.event.OrderCompletedEvent;
-import com.sparta.ecommerce.domain.order.repository.OrderRepository;
 import com.sparta.ecommerce.infrastructure.external.ExternalDataPlatformService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 

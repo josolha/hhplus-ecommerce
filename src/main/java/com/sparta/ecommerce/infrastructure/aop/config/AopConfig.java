@@ -1,9 +1,9 @@
-package com.sparta.ecommerce.common.aop.config;
+package com.sparta.ecommerce.infrastructure.aop.config;
 
 
-import com.sparta.ecommerce.common.aop.logtrace.LogTrace;
-import com.sparta.ecommerce.common.aop.logtrace.LogTraceAspect;
-import com.sparta.ecommerce.common.aop.logtrace.ThreadLocalLogTrace;
+import com.sparta.ecommerce.infrastructure.aop.logtrace.LogTrace;
+import com.sparta.ecommerce.infrastructure.aop.logtrace.LogTraceAspect;
+import com.sparta.ecommerce.infrastructure.aop.logtrace.ThreadLocalLogTrace;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

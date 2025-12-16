@@ -1,7 +1,7 @@
-package com.sparta.ecommerce.common.aop;
+package com.sparta.ecommerce.infrastructure.aop;
 
-import com.sparta.ecommerce.common.aop.annotation.DistributedLock;
-import com.sparta.ecommerce.common.util.CustomSpringELParser;
+import com.sparta.ecommerce.infrastructure.aop.annotation.DistributedLock;
+import com.sparta.ecommerce.infrastructure.util.CustomSpringELParser;
 import java.lang.reflect.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class DistributedLockAop {
     private final RedissonClient redissonClient;
     private final AopForTransaction aopForTransaction;
 
-    @Around("@annotation(com.sparta.ecommerce.common.aop.annotation.DistributedLock)")
+    @Around("@annotation(com.sparta.ecommerce.infrastructure.aop.annotation.DistributedLock)")
     public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();

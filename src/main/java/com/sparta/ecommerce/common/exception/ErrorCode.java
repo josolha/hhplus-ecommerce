@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.domain.common.exception;
+package com.sparta.ecommerce.common.exception;
 
 /**
  * 에러 코드 정의

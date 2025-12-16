@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.cart;
+package com.sparta.ecommerce.application.cart.usecase;
 
 import com.sparta.ecommerce.application.cart.dto.AddToCartRequest;
 import com.sparta.ecommerce.application.cart.dto.CartItemResponse;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * 장바구니 상품 추가 UseCase

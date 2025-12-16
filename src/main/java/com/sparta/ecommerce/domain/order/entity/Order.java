@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.domain.order.entity;
 
-import com.sparta.ecommerce.domain.common.BaseEntity;
+import com.sparta.ecommerce.infrastructure.jpa.BaseEntity;
 import com.sparta.ecommerce.domain.order.OrderStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

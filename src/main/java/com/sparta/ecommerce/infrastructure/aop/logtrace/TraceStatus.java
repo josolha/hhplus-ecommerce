@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.common.aop.logtrace;
+package com.sparta.ecommerce.infrastructure.aop.logtrace;
 
 public class TraceStatus {
 

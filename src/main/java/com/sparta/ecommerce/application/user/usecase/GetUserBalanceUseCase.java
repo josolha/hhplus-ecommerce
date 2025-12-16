@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.user;
+package com.sparta.ecommerce.application.user.usecase;
 
 
 import com.sparta.ecommerce.application.user.dto.UserBalanceResponse;

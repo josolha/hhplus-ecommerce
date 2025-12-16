@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.cart;
+package com.sparta.ecommerce.application.cart.usecase;
 
 import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;
 import com.sparta.ecommerce.domain.cart.exception.CartItemNotFoundException;

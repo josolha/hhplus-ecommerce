@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.order;
+package com.sparta.ecommerce.application.order.usecase;
 
 import com.sparta.ecommerce.application.order.dto.OrderListResponse;
 import com.sparta.ecommerce.application.order.dto.OrderSummaryResponse;

@@ -1,8 +1,8 @@
-package com.sparta.ecommerce.application.order;
+package com.sparta.ecommerce.application.order.service;
 
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
-import com.sparta.ecommerce.application.product.ProductRankingService;
+import com.sparta.ecommerce.application.product.service.ProductRankingService;
 import com.sparta.ecommerce.domain.order.entity.OrderItem;
 import com.sparta.ecommerce.domain.order.event.OrderCompletedEvent;
 import com.sparta.ecommerce.domain.order.service.OrderFacade;

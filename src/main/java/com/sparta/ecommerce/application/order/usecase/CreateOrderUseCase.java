@@ -1,5 +1,6 @@
-package com.sparta.ecommerce.application.order;
+package com.sparta.ecommerce.application.order.usecase;
 
+import com.sparta.ecommerce.application.order.service.CreateOrderService;
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
 import com.sparta.ecommerce.infrastructure.aop.annotation.DistributedLock;

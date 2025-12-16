@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.common.util;
+package com.sparta.ecommerce.infrastructure.util;
 
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;

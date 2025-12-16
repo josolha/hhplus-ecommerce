@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.user;
+package com.sparta.ecommerce.application.user.usecase;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
