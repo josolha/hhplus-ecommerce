@@ -5,6 +5,7 @@ import com.sparta.ecommerce.application.coupon.service.CouponQueueService;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 쿠폰 발급 큐 처리 Worker (Blocking Queue 방식)
@@ -48,6 +50,29 @@ public class CouponWorker {
     }
 
     /**
+     * 애플리케이션 종료 시 Worker 스레드 정리
+     */
+    @PreDestroy
+    public void shutdown() {
+        log.info("쿠폰 큐 Worker 종료 시작");
+
+        executorService.shutdown();  // 새 작업 받지 않음
+
+        try {
+            // 최대 5초 대기
+            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                log.warn("Worker가 5초 안에 종료되지 않아 강제 종료합니다");
+                executorService.shutdownNow();  // 강제 종료
+            }
+            log.info("쿠폰 큐 Worker 종료 완료");
+        } catch (InterruptedException e) {
+            log.error("Worker 종료 중 인터럽트 발생", e);
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
      * 특정 쿠폰의 Worker 스레드 시작
      *
      * @param couponId 쿠폰 ID
@@ -66,12 +91,31 @@ public class CouponWorker {
                         couponIssueProcessor.processSingleIssue(userId, couponId);
                     }
 
+                } catch (org.redisson.RedissonShutdownException e) {
+                    log.info("Worker 종료 (Redisson shutdown): couponId={}", couponId);
+                    break;  // 정상 종료
+
+                } catch (org.redisson.client.RedisException e) {
+                    // InterruptedException이 원인인 경우 정상 종료
+                    if (e.getCause() instanceof InterruptedException) {
+                        log.info("Worker 종료 (Interrupted): couponId={}", couponId);
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    log.error("Worker Redis 예외 발생: couponId={}", couponId, e);
+
                 } catch (Exception e) {
+                    // 기타 예외 처리
+                    if (Thread.currentThread().isInterrupted()) {
+                        log.info("Worker 종료 (Thread interrupted): couponId={}", couponId);
+                        break;
+                    }
                     log.error("Worker 예외 발생: couponId={}", couponId, e);
                     // 잠시 대기 후 재시도
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ie) {
+                        log.info("Worker 종료 (Sleep interrupted): couponId={}", couponId);
                         Thread.currentThread().interrupt();
                         break;
                     }

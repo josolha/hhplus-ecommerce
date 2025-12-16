@@ -4,13 +4,13 @@ import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
 import com.sparta.ecommerce.application.product.ProductRankingService;
 import com.sparta.ecommerce.domain.order.entity.OrderItem;
+import com.sparta.ecommerce.domain.order.event.OrderCompletedEvent;
 import com.sparta.ecommerce.domain.order.service.OrderFacade;
-import com.sparta.ecommerce.domain.user.entity.User;
-import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;
-import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 주문 생성 트랜잭션 처리 서비스
@@ -22,17 +22,20 @@ import org.springframework.stereotype.Service;
 public class CreateOrderService {
 
     private final OrderFacade orderFacade;
-    private final UserRepository userRepository;
     private final ProductRankingService rankingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 주문 생성 비즈니스 로직 (트랜잭션)
+     *
+     * 트랜잭션 관리와 이벤트 발행을 담당
      * 분산 락 안에서 실행되어 동시성이 보장됨
      *
      * 주의: 이 메서드는 상품별 분산 락이 필요한 작업을 수행합니다.
      * OrderFacade.createOrder()는 재고 차감을 포함하므로,
      * UseCase에서 상품 ID 기반 락을 획득해야 합니다.
      */
+    @Transactional
     public OrderResponse create(CreateOrderRequest request) {
         // 1. 주문 생성 (모든 복잡한 로직은 Facade가 처리)
         OrderFacade.OrderResult result = orderFacade.createOrder(
@@ -40,18 +43,16 @@ public class CreateOrderService {
                 request.couponId()
         );
 
-        // 2. 사용자 정보 조회 (결제 후 잔액 확인)
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new UserNotFoundException(request.userId()));
-
-        // 3. 상품 랭킹 업데이트 (주문 완료 시)
+        // 2. 상품 랭킹 업데이트 (주문 완료 시)
         updateProductRanking(result.orderItems());
+
+        // 3. 주문 완료 이벤트 발행 (트랜잭션 커밋 후 외부 데이터 전송)
+        eventPublisher.publishEvent(new OrderCompletedEvent(result.order()));
 
         // 4. 응답 생성
         return OrderResponse.from(
                 result.order(),
-                result.orderItems(),
-                user.getBalance().amount()
+                result.orderItems()
         );
     }
 

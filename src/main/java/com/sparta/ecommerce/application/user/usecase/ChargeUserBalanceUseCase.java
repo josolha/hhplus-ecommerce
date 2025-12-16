@@ -2,8 +2,8 @@ package com.sparta.ecommerce.application.user;
 
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
-import com.sparta.ecommerce.common.aop.annotation.DistributedLock;
-import com.sparta.ecommerce.common.aop.annotation.Trace;
+import com.sparta.ecommerce.infrastructure.aop.annotation.DistributedLock;
+import com.sparta.ecommerce.infrastructure.aop.annotation.Trace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
