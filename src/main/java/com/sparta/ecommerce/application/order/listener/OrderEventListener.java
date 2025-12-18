@@ -1,7 +1,7 @@
 package com.sparta.ecommerce.application.order.listener;
 
 import com.sparta.ecommerce.domain.order.event.OrderCompletedEvent;
-import com.sparta.ecommerce.infrastructure.kafka.producer.OrderKafkaProducer;
+import com.sparta.ecommerce.infrastructure.kafka.order.producer.OrderKafkaProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

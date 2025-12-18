@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 쿠폰 발급 처리 서비스 (트랜잭션 전용)
- * Worker에서 호출하여 트랜잭션 컨텍스트에서 쿠폰을 발급합니다.
+ * Kafka Consumer에서 호출하여 트랜잭션 컨텍스트에서 쿠폰을 발급합니다.
  */
 @Slf4j
 @Service
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouponIssueProcessor {
 
     private final CouponIssueService couponIssueService;
-    private final CouponQueueService queueService;
+    private final CouponIssueRedisService redisService;
 
     /**
      * 단일 쿠폰 발급 처리 (트랜잭션 내에서 실행)
@@ -46,17 +46,17 @@ public class CouponIssueProcessor {
         } catch (CouponExpiredException e) {
             // 쿠폰 만료
             log.warn("쿠폰 만료: userId={}, couponId={}", userId, couponId);
-            queueService.removeFromIssuedSet(couponId, userId);
+            redisService.removeFromIssuedSet(couponId, userId);
 
         } catch (InvalidCouponException e) {
             // 유효하지 않은 쿠폰
             log.error("유효하지 않은 쿠폰: userId={}, couponId={}", userId, couponId);
-            queueService.removeFromIssuedSet(couponId, userId);
+            redisService.removeFromIssuedSet(couponId, userId);
 
         } catch (Exception e) {
             // 기타 예외 - 재시도 가능하도록 Set에서 제거
             log.error("쿠폰 발급 실패: userId={}, couponId={}", userId, couponId, e);
-            queueService.removeFromIssuedSet(couponId, userId);
+            redisService.removeFromIssuedSet(couponId, userId);
         }
     }
 }

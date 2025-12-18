@@ -1,7 +1,7 @@
-package com.sparta.ecommerce.infrastructure.kafka.consumer;
+package com.sparta.ecommerce.infrastructure.kafka.order.consumer;
 
 import com.sparta.ecommerce.infrastructure.external.ExternalDataPlatformService;
-import com.sparta.ecommerce.infrastructure.kafka.message.OrderCompletedMessage;
+import com.sparta.ecommerce.infrastructure.kafka.order.message.OrderCompletedMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

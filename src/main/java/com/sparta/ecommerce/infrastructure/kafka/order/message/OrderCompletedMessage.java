@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.infrastructure.kafka.message;
+package com.sparta.ecommerce.infrastructure.kafka.order.message;
 
 import com.sparta.ecommerce.domain.order.entity.Order;
 import lombok.AllArgsConstructor;

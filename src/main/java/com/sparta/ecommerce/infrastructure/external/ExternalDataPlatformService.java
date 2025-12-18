@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.infrastructure.external;
 
-import com.sparta.ecommerce.infrastructure.kafka.message.OrderCompletedMessage;
+import com.sparta.ecommerce.infrastructure.kafka.order.message.OrderCompletedMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

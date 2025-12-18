@@ -1,7 +1,7 @@
-package com.sparta.ecommerce.infrastructure.kafka.producer;
+package com.sparta.ecommerce.infrastructure.kafka.order.producer;
 
 import com.sparta.ecommerce.domain.order.entity.Order;
-import com.sparta.ecommerce.infrastructure.kafka.message.OrderCompletedMessage;
+import com.sparta.ecommerce.infrastructure.kafka.order.message.OrderCompletedMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
