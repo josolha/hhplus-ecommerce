@@ -51,7 +51,4 @@ public class BalanceHistory {
             chargedAt = LocalDateTime.now();
         }
     }
-
-
-
 }
