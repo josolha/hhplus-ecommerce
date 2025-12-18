@@ -15,7 +15,10 @@ public class LogTraceAspect {
         this.logTrace = logTrace;
     }
 
-    @Around("execution(* com.sparta.ecommerce..*(..)) && !execution(* com.sparta.ecommerce.common.aop..*(..))") // 전체 도메인 (AOP 패키지 제외)
+    @Around("execution(* com.sparta.ecommerce..*(..)) " +
+            "&& !execution(* com.sparta.ecommerce.infrastructure.aop..*(..)) " +
+            "&& !execution(* com.sparta.ecommerce.infrastructure.config..*(..)) " +
+            "&& !execution(* com.sparta.ecommerce.infrastructure.kafka..*(..))") // AOP, Config, Kafka 패키지 제외
     public Object execute(ProceedingJoinPoint joinPoint) throws Throwable {
         TraceStatus status = null;
         try {

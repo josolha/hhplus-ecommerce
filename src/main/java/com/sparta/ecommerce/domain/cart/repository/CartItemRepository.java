@@ -27,7 +27,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, String> {
     /**
      * 장바구니의 모든 항목 삭제 (장바구니 비우기)
      */
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("DELETE FROM CartItem c WHERE c.cartId = :cartId")
     void deleteByCartId(@Param("cartId") String cartId);
 }

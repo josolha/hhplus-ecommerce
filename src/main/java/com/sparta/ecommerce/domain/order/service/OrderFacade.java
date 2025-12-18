@@ -9,6 +9,8 @@ import com.sparta.ecommerce.domain.coupon.entity.UserCoupon;
 import com.sparta.ecommerce.domain.coupon.repository.UserCouponRepository;
 import com.sparta.ecommerce.domain.order.OrderStatus;
 import com.sparta.ecommerce.domain.order.entity.Order;
+import com.sparta.ecommerce.domain.order.entity.OrderItem;
+import com.sparta.ecommerce.domain.order.repository.OrderItemRepository;
 import com.sparta.ecommerce.domain.order.repository.OrderRepository;
 import com.sparta.ecommerce.domain.payment.PaymentMethod;
 import com.sparta.ecommerce.domain.payment.entity.Payment;
@@ -37,6 +39,7 @@ public class OrderFacade {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final UserCouponRepository userCouponRepository;
 
@@ -78,16 +81,20 @@ public class OrderFacade {
         Order order = createOrderEntity(userId, couponId, preparation.totalAmount(), discountAmount, finalAmount);
 
         log.info("order : ",order.getOrderId());
-        // 6. 결제 처리
+
+        // 6. 주문 항목 저장 (orderId 설정 후 저장)
+        List<OrderItem> savedOrderItems = saveOrderItems(order.getOrderId(), preparation.orderItems());
+
+        // 7. 결제 처리
         Payment payment = paymentService.processPayment(order, PaymentMethod.BALANCE);
 
-        // 7. 쿠폰 사용 처리
+        // 8. 쿠폰 사용 처리
         applyCoupon(userId, couponId);
 
-        // 8. 장바구니 비우기
+        // 9. 장바구니 비우기
         cartItemRepository.deleteByCartId(cart.getCartId());
 
-        return new OrderResult(order, preparation.orderItems());
+        return new OrderResult(order, savedOrderItems);
     }
 
     /**
@@ -141,17 +148,36 @@ public class OrderFacade {
     }
 
     /**
+     * 주문 항목 저장
+     */
+    private List<OrderItem> saveOrderItems(String orderId, List<OrderItem> orderItems) {
+        // OrderItem에 orderId 설정 후 저장
+        List<OrderItem> itemsWithOrderId = orderItems.stream()
+                .map(item -> OrderItem.builder()
+                        .orderId(orderId)
+                        .productId(item.getProductId())
+                        .productName(item.getProductName())
+                        .unitPrice(item.getUnitPrice())
+                        .quantity(item.getQuantity())
+                        .subtotal(item.getSubtotal())
+                        .build())
+                .toList();
+
+        return orderItemRepository.saveAll(itemsWithOrderId);
+    }
+
+    /**
      * 쿠폰 사용 처리
      */
     private void applyCoupon(String userId, String couponId) {
         if (couponId != null && !couponId.isEmpty()) {
-            UserCoupon userCoupon = userCouponRepository.findByUserId(userId).stream()
-                    .filter(uc -> uc.getCouponId().equals(couponId))
-                    .findFirst()
-                    .orElseThrow();
+            UserCoupon userCoupon = userCouponRepository.findByUserIdAndCouponId(userId, couponId)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자 쿠폰을 찾을 수 없습니다"));
 
+            log.info("쿠폰 사용 처리 - userCouponId={}, usedAt={}", userCoupon.getUserCouponId(), userCoupon.getUsedAt());
             userCoupon.use();
             userCouponRepository.save(userCoupon);
+            log.info("쿠폰 사용 처리 후 - userCouponId={}, usedAt={}", userCoupon.getUserCouponId(), userCoupon.getUsedAt());
         }
     }
 

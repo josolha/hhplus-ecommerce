@@ -15,7 +15,7 @@ import com.sparta.ecommerce.domain.product.vo.Stock;
 import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.vo.Balance;
-import com.sparta.ecommerce.infrastructure.external.ExternalDataPlatformService;
+import com.sparta.ecommerce.infrastructure.kafka.order.producer.OrderKafkaProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,14 +39,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * 주문 완료 이벤트 통합 테스트
+ * 주문 완료 이벤트 통합 테스트 (Kafka 기반)
  *
  * 테스트 시나리오:
  * 1. 주문 생성 시 OrderCompletedEvent 발행
  * 2. @TransactionalEventListener(AFTER_COMMIT)로 이벤트 수신
- * 3. @Async로 비동기 실행
- * 4. ExternalDataPlatformService 호출
- * 5. 외부 전송 실패 시에도 주문은 성공
+ * 3. OrderKafkaProducer로 Kafka 메시지 발행
+ * 4. Kafka Consumer가 메시지 수신 (별도 검증 필요)
  *
  * Note: @Transactional을 제거하여 AopForTransaction의 REQUIRES_NEW와 충돌 방지
  */
@@ -85,11 +84,10 @@ public class OrderEventIntegrationTest {
     private OrderRepository orderRepository;
 
     /**
-     * SpyBean: 실제 빈을 감싸서 호출 여부를 검증할 수 있게 함
-     * Note: @SpyBean은 deprecated되었지만 아직 사용 가능
+     * SpyBean: Kafka Producer 호출 여부 검증
      */
     @SpyBean
-    private ExternalDataPlatformService externalDataPlatformService;
+    private OrderKafkaProducer orderKafkaProducer;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -109,7 +107,7 @@ public class OrderEventIntegrationTest {
         });
 
         // Mock 초기화 (이전 테스트의 호출 기록 제거)
-        reset(externalDataPlatformService);
+        reset(orderKafkaProducer);
     }
 
     private void setupTestData() {
@@ -145,8 +143,8 @@ public class OrderEventIntegrationTest {
     }
 
     @Test
-    @DisplayName("주문 생성 시 이벤트가 발행되고 외부 데이터 전송이 성공한다")
-    void orderEvent_Success() {
+    @DisplayName("주문 생성 시 Kafka 메시지가 발행된다")
+    void orderEvent_KafkaPublish_Success() {
         // given
         CreateOrderRequest request = new CreateOrderRequest(testUser.getUserId(), null);
 
@@ -157,80 +155,71 @@ public class OrderEventIntegrationTest {
         assertThat(response.orderId()).isNotNull();
         assertThat(response.totalAmount()).isEqualTo(20000L);
 
-        // then - 비동기 이벤트 리스너가 실행될 때까지 대기 (최대 5초)
+        // then - Kafka Producer가 메시지를 발행했는지 검증
         await()
-                .atMost(5, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    // ExternalDataPlatformService.sendOrderData()가 호출되었는지 검증
-                    verify(externalDataPlatformService, times(1))
-                            .sendOrderData(any(Order.class));
+                    verify(orderKafkaProducer, times(1))
+                            .publishOrderCompleted(any(Order.class));
                 });
     }
 
     @Test
-    @DisplayName("외부 데이터 전송 실패 시에도 주문은 성공한다")
-    void orderEvent_ExternalFailure_OrderStillSuccess() {
+    @DisplayName("Kafka 발행 실패 시에도 주문은 성공한다")
+    void orderEvent_KafkaFailure_OrderStillSuccess() {
         // given
         CreateOrderRequest request = new CreateOrderRequest(testUser.getUserId(), null);
 
-        // Mock: 외부 전송이 항상 실패하도록 설정
-        doThrow(new RuntimeException("외부 API 오류"))
-                .when(externalDataPlatformService)
-                .sendOrderData(any(Order.class));
+        // Mock: Kafka 발행이 항상 실패하도록 설정
+        doThrow(new RuntimeException("Kafka 브로커 오류"))
+                .when(orderKafkaProducer)
+                .publishOrderCompleted(any(Order.class));
 
         // when
         OrderResponse response = createOrderUseCase.execute(request);
 
-        // then - 주문 생성은 성공
+        // then - 주문 생성은 성공 (Kafka 실패와 무관)
         assertThat(response.orderId()).isNotNull();
         assertThat(response.totalAmount()).isEqualTo(20000L);
 
-        // then - 외부 전송은 시도되었음 (실패했지만)
+        // then - Kafka 발행은 시도되었음 (실패했지만)
         await()
-                .atMost(5, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    verify(externalDataPlatformService, times(1))
-                            .sendOrderData(any(Order.class));
+                    verify(orderKafkaProducer, times(1))
+                            .publishOrderCompleted(any(Order.class));
                 });
-
-        // 재고/잔액 차감은 주문 성공으로 이미 검증됨 (실패했다면 주문 자체가 실패했을 것)
     }
 
     @Test
-    @DisplayName("이벤트 리스너는 비동기로 실행된다")
-    void orderEvent_ExecutesAsynchronously() throws Exception {
+    @DisplayName("Kafka 발행은 즉시 반환된다")
+    void orderEvent_KafkaPublish_Immediate() throws Exception {
         // given
         CreateOrderRequest request = new CreateOrderRequest(testUser.getUserId(), null);
-
-        // Mock: 외부 전송에 2초 지연 설정
-        doAnswer(invocation -> {
-            Thread.sleep(2000);
-            return null;
-        }).when(externalDataPlatformService).sendOrderData(any(Order.class));
 
         // when
         long startTime = System.currentTimeMillis();
         OrderResponse response = createOrderUseCase.execute(request);
         long endTime = System.currentTimeMillis();
 
-        // then - 주문 API는 2초를 기다리지 않고 즉시 반환 (비동기)
+        // then - 주문 API는 Kafka 발행을 기다리지 않고 즉시 반환
         long executionTime = endTime - startTime;
-        assertThat(executionTime).isLessThan(1000L); // 1초 이내
+        assertThat(executionTime).isLessThan(2000L); // 2초 이내
 
         // then - 주문은 성공
         assertThat(response.orderId()).isNotNull();
 
-        // then - 이벤트 리스너는 백그라운드에서 실행됨
+        // then - Kafka 발행은 트랜잭션 커밋 후 실행됨
         await()
-                .atMost(5, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    verify(externalDataPlatformService, times(1))
-                            .sendOrderData(any(Order.class));
+                    verify(orderKafkaProducer, times(1))
+                            .publishOrderCompleted(any(Order.class));
                 });
     }
 
     @Test
-    @DisplayName("Order 엔티티가 이벤트에 정확히 전달된다")
+    @DisplayName("Order 엔티티가 Kafka Producer에 정확히 전달된다")
     void orderEvent_OrderEntityPassedCorrectly() {
         // given
         CreateOrderRequest request = new CreateOrderRequest(testUser.getUserId(), null);
@@ -240,10 +229,10 @@ public class OrderEventIntegrationTest {
 
         // then
         await()
-                .atMost(5, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     // ArgumentCaptor로 실제 전달된 Order 검증
-                    verify(externalDataPlatformService).sendOrderData(argThat(order ->
+                    verify(orderKafkaProducer).publishOrderCompleted(argThat(order ->
                             order.getOrderId().equals(response.orderId()) &&
                             order.getTotalAmount() == 20000L &&
                             order.getUserId().equals(testUser.getUserId())

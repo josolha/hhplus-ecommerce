@@ -6,8 +6,10 @@ import com.sparta.ecommerce.domain.payment.PaymentStatus;
 import com.sparta.ecommerce.domain.payment.entity.Payment;
 import com.sparta.ecommerce.domain.payment.exception.PaymentFailedException;
 import com.sparta.ecommerce.domain.payment.repository.PaymentRepository;
+import com.sparta.ecommerce.domain.user.entity.BalanceHistory;
 import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.exception.InsufficientBalanceException;
+import com.sparta.ecommerce.domain.user.repository.BalanceHistoryRepository;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final BalanceHistoryRepository balanceHistoryRepository;
 
     /**
      * 결제 처리
@@ -91,9 +94,23 @@ public class PaymentService {
                 throw new InsufficientBalanceException(reason);
             }
 
-            // 4. 잔액 차감
+            // 4. 잔액 차감 및 이력 기록
+            long previousBalance = user.getBalance().amount();
             user.deductBalance(order.getFinalAmount());
             userRepository.save(user);
+
+            // 잔액 차감 이력 저장
+            BalanceHistory history = BalanceHistory.builder()
+                    .userId(user.getUserId())
+                    .amount(-order.getFinalAmount())  // 음수로 기록 (차감)
+                    .previousBalance(previousBalance)
+                    .currentBalance(user.getBalance().amount())
+                    .paymentMethod(PaymentMethod.BALANCE.name())
+                    .build();
+            balanceHistoryRepository.save(history);
+
+            log.info("잔액 차감 이력 저장 - userId={}, amount={}, previousBalance={}, currentBalance={}",
+                    user.getUserId(), -order.getFinalAmount(), previousBalance, user.getBalance().amount());
 
             // 5. 결제 성공 처리
             Payment completedPayment = payment.markAsCompleted();

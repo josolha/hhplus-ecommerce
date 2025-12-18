@@ -2,14 +2,12 @@ package com.sparta.ecommerce.presentation.controller.coupon;
 
 import com.sparta.ecommerce.application.coupon.usecase.CreateCouponUseCase;
 import com.sparta.ecommerce.application.coupon.usecase.GetAvailableCouponsUseCase;
-import com.sparta.ecommerce.application.coupon.usecase.IssueCouponUseCase;
 import com.sparta.ecommerce.application.coupon.usecase.IssueCouponWithQueueUseCase;
 import com.sparta.ecommerce.application.coupon.usecase.ValidateCouponUseCase;
 import com.sparta.ecommerce.application.coupon.dto.CouponQueueResponse;
 import com.sparta.ecommerce.application.coupon.dto.CouponResponse;
 import com.sparta.ecommerce.application.coupon.dto.CreateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.IssueCouponRequest;
-import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +32,6 @@ public class CouponController {
     private final CreateCouponUseCase createCouponUseCase;
     private final GetAvailableCouponsUseCase getAvailableCouponsUseCase;
     private final ValidateCouponUseCase validateCouponUseCase;
-    private final IssueCouponUseCase issueCouponUseCase;
     private final IssueCouponWithQueueUseCase issueCouponWithQueueUseCase;
 
     /**
@@ -60,29 +57,20 @@ public class CouponController {
     }
 
     /**
-     * 쿠폰 발급 (선착순 - 분산 락 방식)
+     * 쿠폰 발급 (선착순)
      * POST /api/coupons/{couponId}/issue
+     *
+     * 동시성 제어:
+     * - Redis Set: 중복 방지
+     * - Kafka: 비동기 처리 (순서 보장 + 병렬 처리)
      */
-    @Operation(summary = "쿠폰 발급 (분산 락)", description = "분산 락을 사용하여 선착순으로 쿠폰을 발급합니다")
+    @Operation(summary = "쿠폰 발급", description = "선착순으로 쿠폰을 발급합니다 (비동기 처리)")
     @PostMapping("/{couponId}/issue")
-    public ResponseEntity<UserCouponResponse> issueCoupon(
-            @Parameter(description = "쿠폰 ID") @PathVariable String couponId,
-            @Valid @RequestBody IssueCouponRequest request) {
-        UserCouponResponse response = issueCouponUseCase.execute(request.userId(), couponId);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 쿠폰 발급 (선착순 - Redis 큐 방식)
-     * POST /api/coupons/{couponId}/issue/queue
-     */
-    @Operation(summary = "쿠폰 발급 (큐)", description = "Redis 큐를 사용하여 선착순으로 쿠폰을 발급합니다 (비동기 처리)")
-    @PostMapping("/{couponId}/issue/queue")
-    public ResponseEntity<CouponQueueResponse> issueCouponWithQueue(
+    public ResponseEntity<CouponQueueResponse> issueCoupon(
             @Parameter(description = "쿠폰 ID") @PathVariable String couponId,
             @Valid @RequestBody IssueCouponRequest request) {
         CouponQueueResponse response = issueCouponWithQueueUseCase.execute(request.userId(), couponId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.accepted().body(response);  // 202 Accepted
     }
 
     /**

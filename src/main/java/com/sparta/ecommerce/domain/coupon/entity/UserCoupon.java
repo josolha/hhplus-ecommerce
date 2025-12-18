@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserCoupon {
 
     @Id
