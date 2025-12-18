@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"  # 외부에서 접속할 Kafka 포트
+      - "9093:9093"  # Controller 포트
+    environment:
+      # === KRaft 모드 설정 (Kafka 3.0+, Zookeeper 불필요) ===
+
+      # 브로커 고유 ID (클러스터 내에서 유일해야 함)
+      KAFKA_NODE_ID: 1
+
+      # 이 노드의 역할 (broker: 메시지 저장/전달, controller: 클러스터 관리)
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Kafka가 수신 대기할 주소와 포트
+      # PLAINTEXT: 외부(호스트) 연결용 (9092)
+      # PLAINTEXT_INTERNAL: 컨테이너 간 내부 연결용 (9094)
+      # CONTROLLER: 내부 관리용 (9093)
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
+
+      # 클라이언트가 접속할 주소
+      # PLAINTEXT: 호스트(맥)에서 접속 -> localhost:9092
+      # PLAINTEXT_INTERNAL: Docker 네트워크 내부 접속 -> kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9094
+
+      # Controller 통신에 사용할 리스너 이름
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # 리스너별 보안 프로토콜 (PLAINTEXT: 암호화 없음)
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+
+      # Controller 노드 목록 (node_id@host:port)
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # 컨테이너 간 통신에 사용할 리스너 (Kafdrop 등 내부 클라이언트용)
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+
+      # === 단일 브로커 개발 환경 설정 ===
+
+      # Offset 토픽의 복제본 수 (단일 브로커라 1)
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      # 트랜잭션 로그 복제본 수
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      # 트랜잭션 로그 최소 동기화 복제본 수
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # Consumer Group 리밸런싱 지연 시간 (0: 즉시)
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # 새 토픽 생성 시 기본 파티션 수
+      KAFKA_NUM_PARTITIONS: 3
+    volumes:
+      - kafka-data:/var/lib/kafka/data  # Kafka 데이터 영구 저장
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop
+    ports:
+      - "8008:9000"  # Kafdrop은 9000 포트 사용
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9094  # 내부 리스너 사용
+      JVM_OPTS: "-Xms32M -Xmx64M"  # 메모리 사용량 최소화
+      SERVER_SERVLET_CONTEXTPATH: "/"
+    depends_on:
+      - kafka
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  kafka-data:
+  redis-data:
