@@ -73,7 +73,7 @@ public class CreateOrderConcurrencyTest {
     private List<User> testUsers;
     private List<String> userIds = new ArrayList<>();
     private List<String> cartIds = new ArrayList<>();
-    private List<String> cartItemIds = new ArrayList<>();
+    private List<Long> cartItemIds = new ArrayList<>();
 
     @BeforeEach
     public void setUp() {
@@ -182,7 +182,7 @@ public class CreateOrderConcurrencyTest {
         List<User> manyUsers = new ArrayList<>();
         List<String> manyUserIds = new ArrayList<>();
         List<String> manyCartIds = new ArrayList<>();
-        List<String> manyCartItemIds = new ArrayList<>();
+        List<Long> manyCartItemIds = new ArrayList<>();
 
         for (int i = 0; i < 100; i++) {
             User user = User.builder()

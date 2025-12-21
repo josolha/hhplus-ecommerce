@@ -30,10 +30,10 @@ public class UpdateCartItemUseCase {
      * @return 변경된 장바구니 항목 정보
      */
     @Transactional
-    public CartItemResponse execute(String userId, String cartItemId, UpdateCartItemRequest request) {
+    public CartItemResponse execute(String userId, Long cartItemId, UpdateCartItemRequest request) {
         // 1. 장바구니 아이템 조회
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new CartItemNotFoundException(cartItemId));
+                .orElseThrow(() -> new CartItemNotFoundException(String.valueOf(cartItemId)));
 
         // 2. 수량 변경
         CartItem updatedItem = cartItem.updateQuantity(request.quantity());

@@ -28,8 +28,8 @@ public class CartItem {
 
     @Id
     @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String cartItemId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long cartItemId;
 
     @Column(name = "cart_id", nullable = false)
     private String cartId;

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
  * 잔액 충전 이력 Repository
  */
 @Repository
-public interface BalanceHistoryRepository extends JpaRepository<BalanceHistory, String> {
+public interface BalanceHistoryRepository extends JpaRepository<BalanceHistory, Long> {
 
     /**
      * 특정 사용자의 충전 이력 조회 (최신순)
