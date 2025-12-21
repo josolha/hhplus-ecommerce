@@ -24,8 +24,8 @@ public class BalanceHistory {
 
     @Id
     @Column(name="id")
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private String userId;

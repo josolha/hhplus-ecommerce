@@ -17,7 +17,7 @@ Table users {
 
 // 잔액 충전 이력
 Table balance_history {
-  id varchar [pk]
+  id bigint [pk, increment]
   user_id varchar [ref: > users.id, not null]
   amount bigint [not null] // 충전 금액 (원 단위, long 타입)
   previous_balance bigint [not null] // 충전 전 잔액
@@ -62,7 +62,7 @@ Table carts {
 
 // 장바구니 항목
 Table cart_items {
-  id varchar [pk]
+  id bigint [pk, increment]
   cart_id varchar [ref: > carts.id, not null]
   product_id varchar [ref: > products.id, not null]
   quantity int [not null]
@@ -134,7 +134,7 @@ Table orders {
 
 // 주문 상세
 Table order_items {
-  id varchar [pk]
+  id bigint [pk, increment]
   order_id varchar [ref: > orders.id, not null]
   product_id varchar [ref: > products.id, not null]
   product_name varchar [not null] // 주문 당시 상품명 (스냅샷)
@@ -190,7 +190,7 @@ Table outbox_events {
 
 // 재입고 알림
 Table restock_notifications {
-  id varchar [pk]
+  id bigint [pk, increment]
   user_id varchar [ref: > users.id, not null]
   product_id varchar [ref: > products.id, not null]
   email varchar [not null]

@@ -8,8 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * 장바구니 항목 응답 DTO
  */
 public record CartItemResponse(
-        @Schema(description = "장바구니 항목 ID", example = "CART001")
-        String cartItemId,
+        @Schema(description = "장바구니 항목 ID", example = "1")
+        Long cartItemId,
 
         @Schema(description = "상품 ID", example = "P001")
         String productId,

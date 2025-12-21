@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 주문 항목 Repository 인터페이스
  */
-public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
+public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     /**
      * 주문 ID로 주문 항목 목록 조회

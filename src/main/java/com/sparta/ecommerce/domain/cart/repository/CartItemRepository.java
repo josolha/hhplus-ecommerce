@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * 장바구니 항목 Repository 인터페이스
  */
-public interface CartItemRepository extends JpaRepository<CartItem, String> {
+public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     /**
      * 장바구니 ID로 항목 목록 조회

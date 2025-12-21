@@ -21,10 +21,10 @@ public class RemoveFromCartUseCase {
      * @param cartItemId 장바구니 항목 ID
      */
     @Transactional
-    public void execute(String userId, String cartItemId) {
+    public void execute(String userId, Long cartItemId) {
         // 1. 장바구니 아이템 존재 확인
         if (!cartItemRepository.findById(cartItemId).isPresent()) {
-            throw new CartItemNotFoundException(cartItemId);
+            throw new CartItemNotFoundException(String.valueOf(cartItemId));
         }
 
         // 2. 항목 삭제
