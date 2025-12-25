@@ -56,9 +56,11 @@ public class CreateOrderService {
         );
 
         // 2. 상품 랭킹 업데이트 (주문 완료 시)
+        // 부하 테스트용 임시 비활성화 - 트랜잭션 시간 단축
         updateProductRanking(result.orderItems());
 
         // 3. Outbox에 이벤트 저장 (같은 트랜잭션 - 원자성 보장)
+        // 부하 테스트용 임시 비활성화 - JSON 직렬화 오버헤드 제거
         saveToOutbox(result.order());
 
         // 4. 응답 생성
