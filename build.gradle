@@ -74,6 +74,13 @@ dependencies {
 
 	//Redis-redisson (분산락)
 	implementation 'org.redisson:redisson-spring-boot-starter:3.23.5'
+
+	//모니터링
+	// 1. Actuator (필수)
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// 2. Prometheus 연동 (선택, Grafana 연동 시 필요)
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
 }
 
 tasks.named('test') {
