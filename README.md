@@ -469,3 +469,20 @@ k6 run k6-tests/order-payment-test.js
 - Email: josolha@nate.com
 - blog: https://josolha.tistory.com
 ---
+
+## 기술 블로그
+
+프로젝트 구현 과정에서 학습한 내용과 트러블슈팅을 정리했습니다.
+
+- [JDK vs CGLIB, Self-Invocation 완벽 정리](https://josolha.tistory.com/78)
+- [UserCoupon Dirty Checking 실패 이슈 해결 과정](https://josolha.tistory.com/77)
+- [@TransactionEventListener 트러블 슈팅, 문제점](https://josolha.tistory.com/76)
+- [Redis 직렬화 문제 해결과정](https://josolha.tistory.com/75)
+- [Redisson 분산 락 AOP로 리팩토링하기](https://josolha.tistory.com/74)
+- [Spring @Transactional이 동작하지 않는 경우: Self-Invocation 문제와 해결](https://josolha.tistory.com/73)
+- [Redis 분산락](https://josolha.tistory.com/72)
+- [동시성(Concurrency) 문제](https://josolha.tistory.com/71)
+- [Testcontainers 통합 테스트에서 발생한 JPA ID 자동 생성 문제](https://josolha.tistory.com/69)
+- [TDD로 포인트 관리 시스템 구현](https://josolha.tistory.com/67)
+
+
