@@ -1,4 +1,4 @@
-# 🛒 E-commerce Core System
+# E-commerce Core System
 
 이커머스 핵심 기능 구현 프로젝트 - 동시성 제어부터 대규모 트래픽 처리까지
 
@@ -10,19 +10,19 @@
 
 ---
 
-## 📌 프로젝트 개요
+## 프로젝트 개요
 
 **선착순 이벤트**, **재고 관리**, **대규모 트래픽**을 고려한 이커머스 백엔드 시스템 설계 및 구현
 
 ### 핵심 목표
-- ⚡ **동시성 제어**: 선착순 쿠폰 발급, 재고 차감, 잔액 관리
-- 🚀 **성능 최적화**: DB 쿼리 최적화, Redis 캐싱, 부하 테스트
-- 🔄 **비동기 처리**: Kafka 메시징, 이벤트 기반 아키텍처
-- 🛡️ **안정성 확보**: Outbox 패턴, 트랜잭션 분리, 재시도 로직
+- **동시성 제어**: 선착순 쿠폰 발급, 재고 차감, 잔액 관리
+- **성능 최적화**: DB 쿼리 최적화, Redis 캐싱, 부하 테스트
+- **비동기 처리**: Kafka 메시징, 이벤트 기반 아키텍처
+- **안정성 확보**: Outbox 패턴, 트랜잭션 분리, 재시도 로직
 
 ---
 
-## 🎯 주요 기능
+## 주요 기능
 
 - **상품 관리**: 재고 추적, 실시간 인기 상품 랭킹 (Redis Sorted Set)
 - **주문/결제**: 장바구니, 잔액 결제, 쿠폰 할인, 재고 차감
@@ -31,14 +31,14 @@
 
 ---
 
-## 📚 Week별 학습 과정
+## 단계별 변화 과정
 
 각 브랜치에서 **실제로 구현한 기능**과 **성능 개선 결과**를 확인할 수 있습니다.
 
-### [Week 1: 요구사항 정의 및 설계](https://github.com/josolha/hhplus-ecommerce/tree/feature/v1-requirements-definition)
-```
-📋 설계 문서 작성
-```
+### [V1: 요구사항 정의 및 설계](https://github.com/josolha/hhplus-ecommerce/tree/feature/v1-requirements-definition)
+
+**설계 문서 작성**
+
 - 요구사항 분석 (상품, 주문, 쿠폰, 외부 연동)
 - **API 설계 명세** 작성 (20+ endpoints)
 - **ERD 설계** (9개 테이블, Outbox 패턴 포함)
@@ -48,10 +48,9 @@
 
 ---
 
-### [Week 2: 레이어드 아키텍처 & 동시성 제어](https://github.com/josolha/hhplus-ecommerce/tree/feature/v2-layered-architecture)
-```
-🏗️ 도메인 모델 구현 + ReentrantLock 동시성 제어
-```
+### [V2: 레이어드 아키텍처 & 동시성 제어](https://github.com/josolha/hhplus-ecommerce/tree/feature/v2-layered-architecture)
+
+**도메인 모델 구현 + ReentrantLock 동시성 제어**
 
 **구현 기능**
 - 도메인 엔티티 설계 (Product, Order, Coupon, User 등)
@@ -68,15 +67,14 @@ private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 ```
 
 **성과**
-- ✅ 100명 동시 쿠폰 발급 테스트 통과 (중복 발급 0건)
-- ✅ Lock 타임아웃 설정으로 데드락 방지
+- 100명 동시 쿠폰 발급 테스트 통과 (중복 발급 0건)
+- Lock 타임아웃 설정으로 데드락 방지
 
 ---
 
-### [Week 3: JPA 도입 & DB 쿼리 최적화](https://github.com/josolha/hhplus-ecommerce/tree/feature/v3-db-optimization)
-```
-🗄️ JPA 전환 + 인덱스 최적화로 71% 성능 개선
-```
+### [V3: JPA 도입 & DB 쿼리 최적화](https://github.com/josolha/hhplus-ecommerce/tree/feature/v3-db-optimization)
+
+**JPA 전환 + 인덱스 최적화로 71% 성능 개선**
 
 **구현 기능**
 - In-Memory → JPA 엔티티 전환
@@ -94,17 +92,16 @@ ON order_items(order_id, product_id, quantity);
 ```
 
 **성과**
-- 📊 **인덱스 없음**: 2,930ms
-- 📊 **orders 인덱스**: 1,785ms (39% ↓)
-- 📊 **Covering Index**: **840ms (71.3% ↓)**
-- ✅ Left-most prefix rule 적용으로 중복 인덱스 제거 (8개 → 6개)
+- **인덱스 없음**: 2,930ms
+- **orders 인덱스**: 1,785ms (39% 감소)
+- **Covering Index**: **840ms (71.3% 감소)**
+- Left-most prefix rule 적용으로 중복 인덱스 제거 (8개 → 6개)
 
 ---
 
-### [Week 4: 비관적 락 & 낙관적 락 적용](https://github.com/josolha/hhplus-ecommerce/tree/feature/v4-concurrency-control)
-```
-🔒 도메인별 최적 락 전략 적용
-```
+### [V4: 비관적 락 & 낙관적 락 적용](https://github.com/josolha/hhplus-ecommerce/tree/feature/v4-concurrency-control)
+
+**도메인별 최적 락 전략 적용**
 
 **도입 기술: 비관적 락 (Pessimistic Lock)**
 ```java
@@ -139,16 +136,15 @@ int incrementIssuedQuantity(@Param("couponId") String couponId);
 - AOP 기반 로그 추적기 (ThreadLocal 활용)
 
 **성과**
-- ✅ 쿠폰: 비관적 락 + 직접 UPDATE (중복 발급 0건)
-- ✅ 재고: SELECT FOR UPDATE (재고 부족 정확히 감지)
-- ✅ 잔액: @Version으로 충돌 감지 후 재시도
+- 쿠폰: 비관적 락 + 직접 UPDATE (중복 발급 0건)
+- 재고: SELECT FOR UPDATE (재고 부족 정확히 감지)
+- 잔액: @Version으로 충돌 감지 후 재시도
 
 ---
 
-### [Week 5: Redis 분산락 & 트랜잭션 분리](https://github.com/josolha/hhplus-ecommerce/tree/feature/v5-redis-distributed-lock)
-```
-🔐 Redisson 분산락 + AOP 패턴 적용
-```
+### [V5: Redis 분산락 & 트랜잭션 분리](https://github.com/josolha/hhplus-ecommerce/tree/feature/v5-redis-distributed-lock)
+
+**Redisson 분산락 + AOP 패턴 적용**
 
 **도입 기술: Redisson 분산락**
 ```java
@@ -164,7 +160,7 @@ public void issueCouponWithLock(String couponId, String userId) {
 public void issueCoupon() {
     try (RLock lock = redissonClient.getLock("coupon")) {
         lock.lock();
-        this.processCouponIssue(); // ❌ Self-invocation
+        this.processCouponIssue(); // Self-invocation 문제
     }
 }
 
@@ -175,7 +171,7 @@ public class IssueCouponUseCase {
     public void issueCoupon() {
         try (RLock lock = redissonClient.getLock("coupon")) {
             lock.lock();
-            service.processCouponIssue(); // ✅ 프록시 정상 작동
+            service.processCouponIssue(); // 프록시 정상 작동
         }
     }
 }
@@ -187,15 +183,14 @@ public class IssueCouponUseCase {
 - Testcontainers (MySQL + Redis 통합 테스트)
 
 **성과**
-- ✅ DB 락 → 분산락 전환으로 서버 확장 대비
-- ✅ @Transactional 정상 작동 (트랜잭션 분리 성공)
+- DB 락 → 분산락 전환으로 서버 확장 대비
+- @Transactional 정상 작동 (트랜잭션 분리 성공)
 
 ---
 
-### [Week 6: Redis Sorted Set 랭킹 & 큐 시스템](https://github.com/josolha/hhplus-ecommerce/tree/feature/v6-redis-ranking-and-async)
-```
-⚡ DB 집계 → Redis 전환으로 96% 성능 개선
-```
+### [V6: Redis Sorted Set 랭킹 & 큐 시스템](https://github.com/josolha/hhplus-ecommerce/tree/feature/v6-redis-ranking-and-async)
+
+**DB 집계 → Redis 전환으로 96% 성능 개선**
 
 **도입 기술: Redis Sorted Set 실시간 랭킹**
 ```java
@@ -214,9 +209,9 @@ public List<Product> getTopProducts(int limit) {
 ```
 
 **성과**
-- 📊 **DB 집계**: 17,520ms (17.5초)
-- 📊 **Redis Sorted Set**: **697ms (25배 빠름, 96% ↓)**
-- ✅ 실시간 랭킹 업데이트 (~1ms 비동기 처리)
+- **DB 집계**: 17,520ms (17.5초)
+- **Redis Sorted Set**: **697ms (25배 빠름, 96% 감소)**
+- 실시간 랭킹 업데이트 (~1ms 비동기 처리)
 
 **추가 구현**
 - Redis 큐 기반 선착순 쿠폰 발급
@@ -224,10 +219,9 @@ public List<Product> getTopProducts(int limit) {
 
 ---
 
-### [Week 7: 이벤트 기반 아키텍처](https://github.com/josolha/hhplus-ecommerce/tree/feature/v7-event-driven-order)
-```
-🔄 트랜잭션 분리로 외부 전송 실패에도 주문 성공 보장
-```
+### [V7: 이벤트 기반 아키텍처](https://github.com/josolha/hhplus-ecommerce/tree/feature/v7-event-driven-order)
+
+**트랜잭션 분리로 외부 전송 실패에도 주문 성공 보장**
 
 **도입 기술: @TransactionalEventListener + @Async**
 ```java
@@ -257,15 +251,14 @@ public class OrderEventListener {
 - 트랜잭션 분리: 외부 전송 실패해도 주문 롤백 안 됨
 
 **성과**
-- ✅ 외부 API 2초 딜레이 + 10% 실패율에도 주문 정상 처리
-- ✅ 사용자 응답 속도 향상 (동기 → 비동기)
+- 외부 API 2초 딜레이 + 10% 실패율에도 주문 정상 처리
+- 사용자 응답 속도 향상 (동기 → 비동기)
 
 ---
 
-### [Week 8: Kafka 메시징 & Outbox Pattern](https://github.com/josolha/hhplus-ecommerce/tree/feature/v8-kafka)
-```
-📡 Kafka + Outbox Pattern으로 메시지 유실 방지
-```
+### [V8: Kafka 메시징 & Outbox Pattern](https://github.com/josolha/hhplus-ecommerce/tree/feature/v8-kafka)
+
+**Kafka + Outbox Pattern으로 메시지 유실 방지**
 
 **도입 기술: Outbox Pattern**
 ```java
@@ -309,16 +302,15 @@ public void scheduleRetry(OutboxEvent event) {
 - 쿠폰 발급도 Kafka 기반으로 전환
 
 **성과**
-- ✅ 주문 트랜잭션 커밋 후 Kafka 전송 (원자성 보장)
-- ✅ 전송 실패 시 자동 재시도 (최대 3회)
-- ✅ 메시지 유실 0건
+- 주문 트랜잭션 커밋 후 Kafka 전송 (원자성 보장)
+- 전송 실패 시 자동 재시도 (최대 3회)
+- 메시지 유실 0건
 
 ---
 
-### [Week 9: k6 부하 테스트 & 성능 최적화](https://github.com/josolha/hhplus-ecommerce/tree/feature/v9-load-test)
-```
-🚀 TPS 10.8배 향상 (7.54 → 81.68)
-```
+### [V9: k6 부하 테스트 & 성능 최적화](https://github.com/josolha/hhplus-ecommerce/tree/feature/v9-load-test)
+
+**TPS 10.8배 향상 (7.54 → 81.68)**
 
 **테스트 환경**
 - 도구: k6 (ramping-vus 시나리오)
@@ -360,9 +352,9 @@ spring:
 
 | API | TPS | p(95) 응답시간 | 동시성 제어 |
 |-----|-----|---------------|------------|
-| 쿠폰 발급 | 372 req/s | 97ms | 중복 발급 0건 ✅ |
-| 잔액 충전 | 551 req/s | 288ms | 충돌 0건 ✅ |
-| 주문/결제 | **82 req/s** | **131ms** | 재고 정합성 보장 ✅ |
+| 쿠폰 발급 | 372 req/s | 97ms | 중복 발급 0건 |
+| 잔액 충전 | 551 req/s | 288ms | 충돌 0건 |
+| 주문/결제 | **82 req/s** | **131ms** | 재고 정합성 보장 |
 
 **문서**
 - [부하 테스트 종합 보고서](docs/loadtest/LOAD_TEST_TOTAL.md)
@@ -370,32 +362,32 @@ spring:
 
 ---
 
-## 🏆 핵심 성과 요약
+## 핵심 성과 요약
 
-### 1️⃣ 성능 개선
-- 📊 **DB 쿼리 최적화**: 2,930ms → 840ms (71.3% ↓)
-- 📊 **Redis 랭킹 전환**: 17.5초 → 697ms (96% ↓, 25배)
-- 📊 **주문 API 최적화**: TPS 7.54 → 81.68 (10.8배 ↑)
-- 📊 **장바구니 인덱스**: 60ms → 2ms (30배 개선)
+### 성능 개선
+- **DB 쿼리 최적화**: 2,930ms → 840ms (71.3% 감소)
+- **Redis 랭킹 전환**: 17.5초 → 697ms (96% 감소, 25배)
+- **주문 API 최적화**: TPS 7.54 → 81.68 (10.8배 향상)
+- **장바구니 인덱스**: 60ms → 2ms (30배 개선)
 
-### 2️⃣ 동시성 제어
-- ✅ ReentrantLock → Redis 분산락 전환 (서버 확장 대비)
-- ✅ 도메인별 최적 락 전략 (비관적/낙관적/직접 UPDATE)
-- ✅ 100명 동시 쿠폰 발급 테스트 통과 (중복 0건)
+### 동시성 제어
+- ReentrantLock → Redis 분산락 전환 (서버 확장 대비)
+- 도메인별 최적 락 전략 (비관적/낙관적/직접 UPDATE)
+- 100명 동시 쿠폰 발급 테스트 통과 (중복 0건)
 
-### 3️⃣ 안정성 확보
-- ✅ Outbox Pattern으로 메시지 유실 방지
-- ✅ 외부 API 장애에도 주문 정상 처리
-- ✅ Exponential Backoff 재시도 로직
+### 안정성 확보
+- Outbox Pattern으로 메시지 유실 방지
+- 외부 API 장애에도 주문 정상 처리
+- Exponential Backoff 재시도 로직
 
-### 4️⃣ 아키텍처 개선
-- ✅ 레이어드 아키텍처 → 이벤트 기반 아키텍처
-- ✅ 동기 처리 → 비동기 처리 (Kafka, @Async)
-- ✅ Self-Invocation 문제 해결 (트랜잭션 분리)
+### 아키텍처 개선
+- 레이어드 아키텍처 → 이벤트 기반 아키텍처
+- 동기 처리 → 비동기 처리 (Kafka, @Async)
+- Self-Invocation 문제 해결 (트랜잭션 분리)
 
 ---
 
-## 🛠 기술 스택
+## 기술 스택
 
 ### Backend
 - **Framework**: Spring Boot 3.5.7
@@ -411,7 +403,7 @@ spring:
 
 ---
 
-## 🚀 실행 방법
+## 실행 방법
 
 ### 1. 환경 설정
 ```bash
@@ -440,7 +432,7 @@ k6 run k6-tests/order-payment-test.js
 
 ---
 
-## 📁 문서
+## 문서
 
 - [API 설계 명세](docs/api/API_DESIGN.md)
 - [ERD 설계](docs/erd/ERD.dbml)
@@ -451,7 +443,7 @@ k6 run k6-tests/order-payment-test.js
 
 ---
 
-## 📌 주요 학습 내용
+## 주요 학습 내용
 
 ### 동시성 제어
 - DB 락 (비관적/낙관적) vs Redis 분산락 trade-off
@@ -470,7 +462,7 @@ k6 run k6-tests/order-payment-test.js
 
 ---
 
-## 👤 Author
+## Author
 
 **josolha**
 - GitHub: [@josolha](https://github.com/josolha)
@@ -478,6 +470,6 @@ k6 run k6-tests/order-payment-test.js
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
