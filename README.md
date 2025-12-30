@@ -467,9 +467,5 @@ k6 run k6-tests/order-payment-test.js
 **josolha**
 - GitHub: [@josolha](https://github.com/josolha)
 - Email: josolha@nate.com
-
+- blog: https://josolha.tistory.com
 ---
-
-## License
-
-This project is licensed under the MIT License.
