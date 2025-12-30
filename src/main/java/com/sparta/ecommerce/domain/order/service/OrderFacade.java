@@ -16,6 +16,7 @@ import com.sparta.ecommerce.domain.payment.PaymentMethod;
 import com.sparta.ecommerce.domain.payment.entity.Payment;
 import com.sparta.ecommerce.domain.payment.service.PaymentService;
 import com.sparta.ecommerce.domain.product.entity.Product;
+import com.sparta.ecommerce.domain.product.exception.InsufficientStockException;
 import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +93,7 @@ public class OrderFacade {
         applyCoupon(userId, couponId);
 
         // 9. 장바구니 비우기
-        cartItemRepository.deleteByCartId(cart.getCartId());
+        //cartItemRepository.deleteByCartId(cart.getCartId());
 
         return new OrderResult(order, savedOrderItems);
     }
@@ -120,14 +121,27 @@ public class OrderFacade {
 
     /**
      * 재고 차감 (직접 UPDATE 쿼리 사용)
+     *
+     * DB 레벨 재고 검증:
+     * - UPDATE 결과 확인 (affected rows)
+     * - 0이면 재고 부족으로 실패 처리
+     * - 사용자별 락 환경에서 동시성 안전장치
      */
     private void deductStock(List<Product> lockedProducts, List<CartItem> cartItems) {
         for (int i = 0; i < cartItems.size(); i++) {
             CartItem cartItem = cartItems.get(i);
             Product product = lockedProducts.get(i);
 
-            // 재고 확인은 이미 prepare()에서 했으므로 바로 차감
-            productRepository.decreaseStock(product.getProductId(), cartItem.getQuantity());
+            // DB 레벨에서 재고 검증하며 차감
+            int updated = productRepository.decreaseStock(product.getProductId(), cartItem.getQuantity());
+
+            // UPDATE 실패 = 재고 부족
+            if (updated == 0) {
+                throw new InsufficientStockException(
+                    String.format("재고 부족: %s (요청 수량: %d개)",
+                        product.getName(), cartItem.getQuantity())
+                );
+            }
         }
     }
 

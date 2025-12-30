@@ -13,19 +13,20 @@ import org.springframework.stereotype.Service;
  *
  * 동시성 제어 전략:
  * - Redisson 분산 락 (Redis 기반)
- * - 락 키: "lock:order:global" (전역 주문 락)
- * - 락 획득 대기 시간: 10초
+ * - 락 키: "lock:order:user:{userId}" (사용자별 주문 락)
+ * - 락 획득 대기 시간: 5초
  * - 락 자동 해제 시간: 3초
  * - 다중 서버 환경에서 안전한 동시성 제어
  *
- * [전역 락을 사용하는 이유]
- * - 주문은 여러 상품의 재고를 동시에 차감합니다
- * - 각 상품에 개별 락을 걸면 데드락 위험이 있습니다
- * - 단순하고 안전한 전역 락 방식을 채택했습니다
+ * [사용자별 락을 사용하는 이유]
+ * - 같은 사용자의 중복 주문 방지 (동일 사용자 동시 주문 차단)
+ * - 다른 사용자는 독립적으로 주문 가능 (TPS 향상)
+ * - 서로 다른 락이므로 데드락 불가능
  *
- * [대안]
- * - 상품 ID 정렬 후 순차 락 획득 (데드락 방지)
- * - 하지만 구현 복잡도가 높아 전역 락 선택
+ * [재고 안전성 보장]
+ * - DB 레벨 재고 검증 (UPDATE ... WHERE stock >= amount)
+ * - 재고 부족 시 UPDATE 실패로 안전하게 처리
+ * - 분산 락 + DB 검증 2단계 안전장치
  *
  * 주문 생성은 다음을 포함합니다:
  * - 재고 차감 (여러 상품)
@@ -39,7 +40,7 @@ public class CreateOrderUseCase {
     private final CreateOrderService createOrderService;
 
     @Trace
-    @DistributedLock(key = "'order:global'")
+    @DistributedLock(key = "'order:user:' + #request.userId")
     public OrderResponse execute(CreateOrderRequest request) {
         return createOrderService.create(request);
     }
