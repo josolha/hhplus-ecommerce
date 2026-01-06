@@ -604,9 +604,4 @@ CREATE INDEX idx_user_coupons_user_coupon ON user_coupons(user_id, coupon_id); -
 - [MySQL 8.0 Reference Manual - Optimization and Indexes](https://dev.mysql.com/doc/refman/8.0/en/optimization-indexes.html)
 - [High Performance MySQL](https://www.oreilly.com/library/view/high-performance-mysql/9781492080503/)
 - [Use The Index, Luke! - A Guide To Database Performance](https://use-the-index-luke.com/)
-
 ---
-
-## 📝 라이선스
-
-이 프로젝트는 학습 목적으로 작성되었습니다.
