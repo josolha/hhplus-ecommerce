@@ -31,11 +31,37 @@
 
 ---
 
+## 📚 목차
+
+- [프로젝트 개요](#프로젝트-개요)
+- [주요 기능](#주요-기능)
+- [단계별 변화 과정](#단계별-변화-과정)
+  - [V1: 요구사항 정의 및 설계](#v1-요구사항-정의-및-설계)
+  - [V2: 레이어드 아키텍처 & 동시성 제어](#v2-레이어드-아키텍처--동시성-제어)
+  - [V3: JPA 도입 & DB 쿼리 최적화](#v3-jpa-도입--db-쿼리-최적화)
+  - [V4: 비관적 락 & 낙관적 락 적용](#v4-비관적-락--낙관적-락-적용)
+  - [V5: Redis 분산락 & 트랜잭션 분리](#v5-redis-분산락--트랜잭션-분리)
+  - [V6: Redis Sorted Set 랭킹 & 큐 시스템](#v6-redis-sorted-set-랭킹--큐-시스템)
+  - [V7: 이벤트 기반 아키텍처](#v7-이벤트-기반-아키텍처)
+  - [V8: Kafka 메시징 & Outbox Pattern](#v8-kafka-메시징--outbox-pattern)
+  - [V9: k6 부하 테스트 & 성능 최적화](#v9-k6-부하-테스트--성능-최적화)
+- [핵심 성과 요약](#핵심-성과-요약)
+- [기술 스택](#기술-스택)
+- [실행 방법](#실행-방법)
+- [문서](#문서)
+- [주요 학습 내용](#주요-학습-내용)
+- [기술 블로그](#기술-블로그)
+
+---
+
 ## 단계별 변화 과정
 
 각 브랜치에서 **실제로 구현한 기능**과 **성능 개선 결과**를 확인할 수 있습니다.
 
-### [V1: 요구사항 정의 및 설계](https://github.com/josolha/hhplus-ecommerce/tree/feature/v1-requirements-definition)
+<details>
+<summary><strong>V1: 요구사항 정의 및 설계</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v1-requirements-definition)**
 
 **설계 문서 작성**
 
@@ -46,9 +72,12 @@
 
 **산출물**: [API 설계](docs/api/API_DESIGN.md) | [ERD](docs/erd/ERD.dbml) | [시퀀스 다이어그램](docs/sequence/SEQUENCE_DIAGRAM.md)
 
----
+</details>
 
-### [V2: 레이어드 아키텍처 & 동시성 제어](https://github.com/josolha/hhplus-ecommerce/tree/feature/v2-layered-architecture)
+<details>
+<summary><strong>V2: 레이어드 아키텍처 & 동시성 제어</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v2-layered-architecture)**
 
 **도메인 모델 구현 + ReentrantLock 동시성 제어**
 
@@ -70,9 +99,12 @@ private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 - 100명 동시 쿠폰 발급 테스트 통과 (중복 발급 0건)
 - Lock 타임아웃 설정으로 데드락 방지
 
----
+</details>
 
-### [V3: JPA 도입 & DB 쿼리 최적화](https://github.com/josolha/hhplus-ecommerce/tree/feature/v3-db-optimization)
+<details>
+<summary><strong>V3: JPA 도입 & DB 쿼리 최적화</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v3-db-optimization)**
 
 **JPA 전환 + 인덱스 최적화로 71% 성능 개선**
 
@@ -97,9 +129,12 @@ ON order_items(order_id, product_id, quantity);
 - **Covering Index**: **840ms (71.3% 감소)**
 - Left-most prefix rule 적용으로 중복 인덱스 제거 (8개 → 6개)
 
----
+</details>
 
-### [V4: 비관적 락 & 낙관적 락 적용](https://github.com/josolha/hhplus-ecommerce/tree/feature/v4-concurrency-control)
+<details>
+<summary><strong>V4: 비관적 락 & 낙관적 락 적용</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v4-concurrency-control)**
 
 **도메인별 최적 락 전략 적용**
 
@@ -140,9 +175,12 @@ int incrementIssuedQuantity(@Param("couponId") String couponId);
 - 재고: SELECT FOR UPDATE (재고 부족 정확히 감지)
 - 잔액: @Version으로 충돌 감지 후 재시도
 
----
+</details>
 
-### [V5: Redis 분산락 & 트랜잭션 분리](https://github.com/josolha/hhplus-ecommerce/tree/feature/v5-redis-distributed-lock)
+<details>
+<summary><strong>V5: Redis 분산락 & 트랜잭션 분리</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v5-redis-distributed-lock)**
 
 **Redisson 분산락 + AOP 패턴 적용**
 
@@ -186,9 +224,12 @@ public class IssueCouponUseCase {
 - DB 락 → 분산락 전환으로 서버 확장 대비
 - @Transactional 정상 작동 (트랜잭션 분리 성공)
 
----
+</details>
 
-### [V6: Redis Sorted Set 랭킹 & 큐 시스템](https://github.com/josolha/hhplus-ecommerce/tree/feature/v6-redis-ranking-and-async)
+<details>
+<summary><strong>V6: Redis Sorted Set 랭킹 & 큐 시스템</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v6-redis-ranking-and-async)**
 
 **DB 집계 → Redis 전환으로 96% 성능 개선**
 
@@ -217,9 +258,12 @@ public List<Product> getTopProducts(int limit) {
 - Redis 큐 기반 선착순 쿠폰 발급
 - StringRedisTemplate 직렬화 이슈 해결
 
----
+</details>
 
-### [V7: 이벤트 기반 아키텍처](https://github.com/josolha/hhplus-ecommerce/tree/feature/v7-event-driven-order)
+<details>
+<summary><strong>V7: 이벤트 기반 아키텍처</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v7-event-driven-order)**
 
 **트랜잭션 분리로 외부 전송 실패에도 주문 성공 보장**
 
@@ -254,9 +298,12 @@ public class OrderEventListener {
 - 외부 API 2초 딜레이 + 10% 실패율에도 주문 정상 처리
 - 사용자 응답 속도 향상 (동기 → 비동기)
 
----
+</details>
 
-### [V8: Kafka 메시징 & Outbox Pattern](https://github.com/josolha/hhplus-ecommerce/tree/feature/v8-kafka)
+<details>
+<summary><strong>V8: Kafka 메시징 & Outbox Pattern</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v8-kafka)**
 
 **Kafka + Outbox Pattern으로 메시지 유실 방지**
 
@@ -306,9 +353,12 @@ public void scheduleRetry(OutboxEvent event) {
 - 전송 실패 시 자동 재시도 (최대 3회)
 - 메시지 유실 0건
 
----
+</details>
 
-### [V9: k6 부하 테스트 & 성능 최적화](https://github.com/josolha/hhplus-ecommerce/tree/feature/v9-load-test)
+<details>
+<summary><strong>V9: k6 부하 테스트 & 성능 최적화</strong></summary>
+
+**🔗 [브랜치 바로가기](https://github.com/josolha/hhplus-ecommerce/tree/feature/v9-load-test)**
 
 **TPS 10.8배 향상 (7.54 → 81.68)**
 
@@ -360,6 +410,8 @@ spring:
 - [부하 테스트 종합 보고서](docs/loadtest/LOAD_TEST_TOTAL.md)
 - [장애 대응 보고서](docs/loadtest/INCIDENT_REPORT.md)
 
+</details>
+
 ---
 
 ## 핵심 성과 요약
@@ -403,35 +455,6 @@ spring:
 
 ---
 
-## 실행 방법
-
-### 1. 환경 설정
-```bash
-# Docker Compose로 MySQL, Redis, Kafka 실행
-docker-compose up -d
-
-# 환경 변수 설정
-cp src/main/resources/application.yml.example src/main/resources/application.yml
-```
-
-### 2. 애플리케이션 실행
-```bash
-./gradlew bootRun
-```
-
-### 3. 부하 테스트 실행
-```bash
-# 테스트 데이터 생성 (100,000명)
-./gradlew test --tests "LoadTestDataSeeder.seedForLoadTest"
-
-# k6 부하 테스트
-k6 run k6-tests/coupon-issue-test.js
-k6 run k6-tests/balance-charge-test.js
-k6 run k6-tests/order-payment-test.js
-```
-
----
-
 ## 문서
 
 - [API 설계 명세](docs/api/API_DESIGN.md)
@@ -460,14 +483,6 @@ k6 run k6-tests/order-payment-test.js
 - Outbox Pattern 구현
 - 트랜잭션 경계 설정
 
----
-
-## Author
-
-**josolha**
-- GitHub: [@josolha](https://github.com/josolha)
-- Email: josolha@nate.com
-- blog: https://josolha.tistory.com
 ---
 
 ## 기술 블로그

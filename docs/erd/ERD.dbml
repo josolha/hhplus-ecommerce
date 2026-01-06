@@ -3,7 +3,14 @@
 
 Project ecommerce {
   database_type: 'MySQL'
-  Note: '이커머스 핵심 기능 ERD'
+  Note: '''
+    이커머스 핵심 기능 ERD
+
+    주요 성능 최적화:
+    - V3: orders(status, created_at) 인덱스로 쿼리 71.3% 개선 (2,930ms → 840ms)
+    - V9: cart_items(cart_id) 인덱스로 장바구니 조회 60배 개선 (60ms → 1ms)
+    - Left-most prefix rule 적용하여 중복 인덱스 제거
+  '''
 }
 
 // 사용자 정보
@@ -37,14 +44,13 @@ Table products {
   name varchar [not null]
   description text
   price bigint [not null] // 가격 (원 단위, long 타입)
-  quantity int [default: 0, not null]
+  stock int [default: 0, not null] // 재고 수량 (Stock VO)
   category varchar
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 
   indexes {
-    (category)
-    (created_at)
+    (category, price) // 카테고리별 가격 정렬 최적화
   }
 }
 
@@ -69,9 +75,7 @@ Table cart_items {
   added_at timestamp [default: `now()`]
 
   indexes {
-    (cart_id)
-    (product_id)
-    (cart_id, product_id) [unique] // 같은 장바구니에 동일 상품 중복 방지
+    (cart_id) // 장바구니 조회 최적화 (V9 성능 개선: 60ms → 1ms, 60배)
   }
 }
 
@@ -100,16 +104,17 @@ Table user_coupons {
   id varchar [pk]
   user_id varchar [ref: > users.id, not null]
   coupon_id varchar [ref: > coupons.id, not null]
-  status varchar [default: 'available', not null] // available, used, expired
   issued_at timestamp [default: `now()`]
-  used_at timestamp [null]
+  used_at timestamp [null] // null이면 미사용, 값이 있으면 사용됨
   expires_at timestamp [not null]
+  version bigint [default: 0] // 낙관적 락 (@Version)
 
   indexes {
-    (user_id, status)
-    (coupon_id)
-    (user_id, coupon_id) [unique] // 중복 발급 방지
+    (user_id, coupon_id) // 중복 발급 체크용
+    (user_id) // 사용자별 쿠폰 조회
   }
+
+  Note: 'status는 필드가 아닌 메서드로 계산 (used_at, expires_at 기반)'
 }
 
 // 주문 정보
@@ -126,9 +131,9 @@ Table orders {
   paid_at timestamp [null]
 
   indexes {
-    (user_id, created_at)
-    (status)
-    (paid_at)
+    (status, created_at) // 인기 상품 조회 최적화 (V3: 2,930ms → 840ms, 71.3% 개선)
+    (user_id) // 사용자별 주문 조회
+    (user_id, status) // 사용자별 상태별 주문 조회
   }
 }
 
