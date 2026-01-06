@@ -9,7 +9,6 @@
 - [주요 기능](#-주요-기능)
 - [아키텍처 설계](#-아키텍처-설계)
 - [동시성 제어 방식 분석](#-동시성-제어-방식-분석)
-- [실행 방법](#-실행-방법)
 - [테스트](#-테스트)
 
 ---
@@ -484,22 +483,6 @@ User Request → Queue → Worker (순차 처리)
 
 ## 🏃 실행 방법
 
-### 요구사항
-- Java 17
-- Gradle 8.x
-
-### 빌드 및 실행
-```bash
-# 빌드
-./gradlew build
-
-# 테스트
-./gradlew test
-
-# 실행
-./gradlew bootRun
-```
-
 ### API 엔드포인트
 ```bash
 # 상품 목록 조회
@@ -536,18 +519,4 @@ Body: { "userId": "U001", "couponId": "C001" }
 - `IssueCouponConcurrencyTest`: 동시성 제어 검증
 - `IssueCouponUseCaseTest`: 쿠폰 발급 로직 단위 테스트
 - `CreateOrderUseCaseTest`: 주문 생성 로직 테스트
-
 ---
-
-## 📚 참고 자료
-
-- [Java Concurrency in Practice](https://jcip.net/) - Brian Goetz
-- [Oracle Java Documentation - java.util.concurrent.locks](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/locks/package-summary.html)
-- [Spring Boot Reference Documentation](https://spring.io/projects/spring-boot)
-- [레이어드 아키텍처 패턴](https://martinfowler.com/bliki/PresentationDomainDataLayering.html)
-
----
-
-## 📝 라이선스
-
-이 프로젝트는 학습 목적으로 작성되었습니다.
