@@ -240,13 +240,12 @@ sequenceDiagram
     participant Payment as PaymentService
     participant DB as MySQL
 
-    %% API 요청
-    K6->>+API: POST /api/orders
+    K6->>API: POST /api/orders
     Note over K6,API: { userId, couponId? }
-    API->>+UseCase: execute(request)
+    API->>UseCase: execute(request)
 
-    %% 분산 락 획득
-    UseCase->>+Redis: tryLock("order:user:{userId}", 5s, 3s)
+    UseCase->>Redis: tryLock("order:user:{userId}", 5s, 3s)
+
     alt 락 획득 실패
         Redis-->>UseCase: false (타임아웃)
         UseCase-->>API: LockAcquisitionException
@@ -255,16 +254,15 @@ sequenceDiagram
         Redis-->>UseCase: true (락 획득)
         Note over UseCase: 락 보유 시간: 최대 3초
 
-        UseCase->>+Service: create(request)
+        UseCase->>Service: create(request)
         Note over Service: @Transactional 시작
 
-        Service->>+Facade: createOrder(userId, couponId)
+        Service->>Facade: createOrder(userId, couponId)
 
-        %% 1. 장바구니 조회
-        Facade->>+DB: SELECT * FROM carts WHERE user_id = ?
+        Facade->>DB: SELECT * FROM carts WHERE user_id = ?
         DB-->>Facade: Cart
         Facade->>DB: SELECT * FROM cart_items WHERE cart_id = ?
-        DB-->>-Facade: List<CartItem>
+        DB-->>Facade: List<CartItem>
 
         alt 장바구니 비어있음
             Facade-->>Service: EmptyCartException
@@ -272,109 +270,84 @@ sequenceDiagram
             UseCase->>Redis: unlock()
             UseCase-->>API: 400 Bad Request
             API-->>K6: 400 (빈 장바구니)
-        end
+        else 장바구니 있음
+            Facade->>Prep: prepare(cartItems)
 
-        %% 2. 주문 항목 준비
-        Facade->>+Prep: prepare(cartItems)
-        loop 각 CartItem
-            Prep->>+DB: SELECT * FROM products WHERE id = ?
-            DB-->>-Prep: Product
-            Note over Prep: 재고 확인: quantity >= 요청수량
-            alt 재고 부족
-                Prep-->>Facade: InsufficientStockException
+            loop 각 CartItem
+                Prep->>DB: SELECT * FROM products WHERE id = ?
+                DB-->>Prep: Product
+                Note over Prep: 재고 확인: quantity >= 요청수량
+            end
+
+            Prep-->>Facade: OrderPreparation
+
+            Facade->>Discount: calculate(userId, couponId, totalAmount)
+
+            alt 쿠폰 있음
+                Discount->>DB: SELECT * FROM user_coupons
+                DB-->>Discount: UserCoupon
+                Discount-->>Facade: discountAmount
+            else 쿠폰 없음
+                Discount-->>Facade: 0
+            end
+
+            loop 각 Product
+                Facade->>DB: UPDATE products SET quantity = quantity - ?<br/>WHERE id = ? AND quantity >= ?
+                DB-->>Facade: affected rows
+            end
+
+            Facade->>DB: INSERT INTO orders, order_items
+            DB-->>Facade: Order + OrderItems
+
+            Facade->>Payment: processPayment(order, BALANCE)
+            Payment->>DB: INSERT INTO payments (status=PENDING)
+            Payment->>DB: SELECT * FROM users WHERE id = ?
+            DB-->>Payment: User
+
+            alt 잔액 부족
+                Payment->>DB: UPDATE payments SET status=FAILED
+                Payment-->>Facade: InsufficientBalanceException
                 Facade-->>Service: 예외 전파
                 Service-->>UseCase: 예외 전파
                 UseCase->>Redis: unlock()
                 UseCase-->>API: 400 Bad Request
-                API-->>K6: 400 (재고 부족)
-            end
-        end
-        Prep-->>-Facade: OrderPreparation<br/>(orderItems, lockedProducts, totalAmount)
+                API-->>K6: 400 (잔액 부족)
+            else 잔액 충분
+                Payment->>DB: UPDATE users SET balance = ?
+                Payment->>DB: INSERT INTO balance_history
+                Payment->>DB: UPDATE payments SET status=COMPLETED
+                Payment-->>Facade: Payment (COMPLETED)
 
-        %% 3. 할인 계산
-        Facade->>+Discount: calculate(userId, couponId, totalAmount)
-        alt 쿠폰 있음
-            Discount->>+DB: SELECT * FROM user_coupons<br/>WHERE user_id = ? AND coupon_id = ?
-            DB-->>-Discount: UserCoupon
-            Discount-->>Facade: discountAmount
-        else 쿠폰 없음
-            Discount-->>-Facade: 0
-        end
+                alt 쿠폰 사용
+                    Facade->>DB: UPDATE user_coupons SET used_at = NOW()
+                    DB-->>Facade: UserCoupon (USED)
+                end
 
-        %% 4. 재고 차감
-        loop 각 Product
-            Facade->>+DB: UPDATE products<br/>SET quantity = quantity - ?<br/>WHERE id = ? AND quantity >= ?
-            alt 재고 부족 (affected rows = 0)
-                DB-->>Facade: 0 (UPDATE 실패)
-                Facade-->>Service: InsufficientStockException
-                Service-->>UseCase: 예외 전파 (롤백)
+                Facade-->>Service: OrderResult(order, orderItems)
+
+                Service->>Redis: ZINCRBY product:ranking
+                Note over Service: Redis Sorted Set 업데이트
+
+                Service->>DB: INSERT INTO outbox_events
+                DB-->>Service: OutboxEvent
+
+                Service-->>UseCase: OrderResponse
+                Note over Service: 트랜잭션 커밋
+
                 UseCase->>Redis: unlock()
-                UseCase-->>API: 400 Bad Request
-                API-->>K6: 400 (재고 부족)
-            else 재고 차감 성공
-                DB-->>-Facade: 1 (UPDATE 성공)
+                Note over Redis: 락 해제
+
+                UseCase-->>API: OrderResponse
+                API-->>K6: 200 OK
+                Note over K6: 주문 성공
             end
         end
-
-        %% 5. 주문 생성
-        Facade->>+DB: INSERT INTO orders (...)<br/>INSERT INTO order_items (...)
-        DB-->>-Facade: Order + List<OrderItem>
-
-        %% 6. 결제 처리
-        Facade->>+Payment: processPayment(order, BALANCE)
-        Payment->>DB: INSERT INTO payments (status=PENDING)
-        Payment->>+DB: SELECT * FROM users WHERE id = ?
-        DB-->>-Payment: User
-
-        alt 잔액 부족
-            Payment-->>Payment: User.balance < finalAmount
-            Payment->>DB: UPDATE payments SET status=FAILED
-            Payment-->>Facade: InsufficientBalanceException
-            Facade-->>Service: 예외 전파 (롤백)
-            Service-->>UseCase: 예외 전파
-            UseCase->>Redis: unlock()
-            UseCase-->>API: 400 Bad Request
-            API-->>K6: 400 (잔액 부족)
-        else 잔액 충분
-            Payment->>Payment: User.deductBalance(finalAmount)
-            Payment->>DB: UPDATE users SET balance = ?
-            Payment->>DB: INSERT INTO balance_history<br/>(transactionId="ORDER-{orderId}", amount=-{finalAmount}, ...)
-            Payment->>DB: UPDATE payments SET status=COMPLETED
-            Payment-->>-Facade: Payment (COMPLETED)
-        end
-
-        %% 7. 쿠폰 사용
-        alt 쿠폰 사용
-            Facade->>+DB: UPDATE user_coupons<br/>SET used_at = NOW()<br/>WHERE id = ?
-            DB-->>-Facade: UserCoupon (USED)
-        end
-
-        Facade-->>-Service: OrderResult(order, orderItems)
-
-        %% 8. 랭킹 업데이트
-        Service->>Redis: ZINCRBY product:ranking {productId} 1
-        Note over Service: Redis Sorted Set에 구매 카운트 증가
-
-        %% 9. Outbox 이벤트 저장
-        Service->>+DB: INSERT INTO outbox_events<br/>(aggregateType="ORDER",<br/> eventType="ORDER_COMPLETED",<br/> status=PENDING, ...)
-        DB-->>-Service: OutboxEvent
-
-        Service-->>-UseCase: OrderResponse
-        Note over Service: 트랜잭션 커밋 ✅
-
-        UseCase->>-Redis: unlock()
-        Note over Redis: 락 해제 (3초 이전)
-
-        UseCase-->>-API: OrderResponse
-        API-->>-K6: 200 OK
-        Note over K6: 주문 성공 ✅
     end
 
-    %% 비동기 처리 (별도 스레드)
     Note over DB,Redis: Outbox Scheduler (별도 프로세스)
-    DB->>DB: SELECT * FROM outbox_events<br/>WHERE status = PENDING
-    DB->>Redis: Kafka Producer<br/>publish(ORDER_COMPLETED)
-    DB->>DB: UPDATE outbox_events<br/>SET status = PUBLISHED
+    DB->>DB: SELECT * FROM outbox_events WHERE status = PENDING
+    DB->>Redis: Kafka Producer publish
+    DB->>DB: UPDATE outbox_events SET status = PUBLISHED
 ```
 
 ### 상태 전이 다이어그램
@@ -386,7 +359,7 @@ stateDiagram-v2
     주문요청 --> 락획득시도: 분산 락 시도
 
     락획득시도 --> 락획득실패: 5초 타임아웃
-    락획득실패 --> [*]: 500 Error (락 획득 실패)
+    락획득실패 --> [*]: 500 Error
 
     락획득시도 --> 락획득성공: 락 획득 (3초 보유)
 
@@ -428,13 +401,6 @@ stateDiagram-v2
     트랜잭션커밋 --> 락해제2: unlock()
     락해제2 --> 주문완료: 200 OK
     주문완료 --> [*]
-
-    style 빈장바구니 fill:#ff6b6b
-    style 재고부족1 fill:#ffa500
-    style 재고부족2 fill:#ffa500
-    style 잔액부족 fill:#ffa500
-    style 락획득실패 fill:#ff6b6b
-    style 주문완료 fill:#51cf66
 ```
 
 ### 예외 처리 플로우
