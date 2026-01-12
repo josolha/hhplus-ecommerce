@@ -25,6 +25,7 @@ public class CouponIssueRedisService {
     private final StringRedisTemplate redisTemplate;
 
     private static final String ISSUED_SET_PREFIX = "coupon:issued:";
+    private static final String SOLD_OUT_FLAG_PREFIX = "coupon:sold-out:";
 
     /**
      * Redis Set에 사용자 추가 (중복 체크)
@@ -73,5 +74,67 @@ public class CouponIssueRedisService {
         String issuedSetKey = ISSUED_SET_PREFIX + couponId;
         redisTemplate.opsForSet().remove(issuedSetKey, userId);
         log.debug("발급 실패로 Set에서 제거 (재시도 가능): userId={}, couponId={}", userId, couponId);
+    }
+
+    /**
+     * 재고 소진 플래그 설정
+     * 재고가 소진되면 플래그를 설정하여 후속 요청을 빠르게 차단
+     *
+     * @param couponId 쿠폰 ID
+     */
+    public void setSoldOutFlag(String couponId) {
+        String soldOutKey = SOLD_OUT_FLAG_PREFIX + couponId;
+        redisTemplate.opsForValue().set(soldOutKey, "true");
+        redisTemplate.expire(soldOutKey, 1, java.util.concurrent.TimeUnit.HOURS);
+        log.info("재고 소진 플래그 설정: couponId={}", couponId);
+    }
+
+    /**
+     * 재고 소진 여부 확인
+     *
+     * @param couponId 쿠폰 ID
+     * @return true: 재고 소진, false: 재고 있음
+     */
+    public boolean isSoldOut(String couponId) {
+        String soldOutKey = SOLD_OUT_FLAG_PREFIX + couponId;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(soldOutKey));
+    }
+
+    /**
+     * Redis 재고 초기화 (쿠폰 생성 시)
+     *
+     * @param couponId 쿠폰 ID
+     * @param quantity 초기 재고 수량
+     */
+    public void initializeStock(String couponId, Integer quantity) {
+        String stockKey = "coupon:stock:" + couponId;
+        redisTemplate.opsForValue().set(stockKey, String.valueOf(quantity));
+        log.info("Redis 재고 초기화: couponId={}, quantity={}", couponId, quantity);
+    }
+
+    /**
+     * Redis 재고 1 감소 (원자적)
+     *
+     * @param couponId 쿠폰 ID
+     * @return 감소 후 남은 재고 (음수 가능)
+     */
+    public Long decrementStock(String couponId) {
+        String stockKey = "coupon:stock:" + couponId;
+        Long remaining = redisTemplate.opsForValue().decrement(stockKey);
+        log.debug("Redis 재고 감소: couponId={}, remaining={}", couponId, remaining);
+        return remaining;
+    }
+
+    /**
+     * Redis 재고 1 증가 (롤백/복구용)
+     *
+     * @param couponId 쿠폰 ID
+     * @return 증가 후 재고
+     */
+    public Long incrementStock(String couponId) {
+        String stockKey = "coupon:stock:" + couponId;
+        Long remaining = redisTemplate.opsForValue().increment(stockKey);
+        log.debug("Redis 재고 복구: couponId={}, remaining={}", couponId, remaining);
+        return remaining;
     }
 }

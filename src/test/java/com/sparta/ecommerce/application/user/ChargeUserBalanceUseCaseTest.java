@@ -50,7 +50,7 @@ class ChargeUserBalanceUseCaseTest {
         given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
-        ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
+        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-" + System.nanoTime(), chargeAmount);
 
         // when
         ChargeBalanceResponse response = chargeUserBalanceUseCase.execute(userId, request);
@@ -86,7 +86,7 @@ class ChargeUserBalanceUseCaseTest {
         given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
-        ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
+        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-" + System.nanoTime(), chargeAmount);
 
         // when
         ChargeBalanceResponse response = chargeUserBalanceUseCase.execute(userId, request);
@@ -114,7 +114,7 @@ class ChargeUserBalanceUseCaseTest {
         given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
-        ChargeBalanceRequest request = new ChargeBalanceRequest(0L);
+        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-invalid", 0L);
 
         // when & then
         assertThatThrownBy(() -> chargeUserBalanceUseCase.execute(userId, request))
@@ -138,7 +138,7 @@ class ChargeUserBalanceUseCaseTest {
         given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
-        ChargeBalanceRequest request = new ChargeBalanceRequest(-10000L);
+        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-negative", -10000L);
 
         // when & then
         assertThatThrownBy(() -> chargeUserBalanceUseCase.execute(userId, request))
@@ -156,7 +156,7 @@ class ChargeUserBalanceUseCaseTest {
         given(userRepository.findById(userId))
                 .willReturn(Optional.empty());
 
-        ChargeBalanceRequest request = new ChargeBalanceRequest(10000L);
+        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-not-found", 10000L);
 
         // when & then
         assertThatThrownBy(() -> chargeUserBalanceUseCase.execute(userId, request))
@@ -183,7 +183,7 @@ class ChargeUserBalanceUseCaseTest {
         given(userRepository.findById(userId))
                 .willReturn(Optional.of(user));
 
-        ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
+        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-" + System.nanoTime(), chargeAmount);
 
         // when
         ChargeBalanceResponse response = chargeUserBalanceUseCase.execute(userId, request);

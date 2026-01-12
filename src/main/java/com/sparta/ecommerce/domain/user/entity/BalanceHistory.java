@@ -30,6 +30,9 @@ public class BalanceHistory {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
+    @Column(name = "transaction_id", nullable = false, unique = true)
+    private String transactionId;
+
     @Column(nullable = false)
     private long amount;
 

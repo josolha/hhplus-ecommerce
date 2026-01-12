@@ -45,23 +45,8 @@ public class IssueCouponWithQueueUseCase {
     private final CouponKafkaProducer kafkaProducer;
 
     @Trace
-    @Transactional(readOnly = true)  // DB 조회만 하므로 readOnly
     public CouponQueueResponse execute(String userId, String couponId) {
-        // 0. 쿠폰 존재 여부 및 유효성 검증
-        Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new InvalidCouponException("존재하지 않는 쿠폰입니다: " + couponId));
-
-        // 쿠폰 만료 확인
-        if (coupon.isExpired()) {
-            throw new CouponExpiredException(couponId);
-        }
-
-        // 재고 확인 (빠른 실패)
-        if (!coupon.hasStock()) {
-            throw new CouponSoldOutException(couponId);
-        }
-
-        // 1. Redis Set으로 중복 체크
+        // 1. 중복 체크 (먼저 체크하여 불필요한 재고 감소 방지)
         Long added = redisService.addToIssuedSet(couponId, userId);
 
         if (added == null || added == 0) {
@@ -69,11 +54,20 @@ public class IssueCouponWithQueueUseCase {
             throw new DuplicateCouponIssueException(couponId);
         }
 
-        // 2. Kafka 메시지 발행
+        // 2. Redis 재고 원자적 감소 (선착순 결정) ⭐
+        Long remaining = redisService.decrementStock(couponId);
+
+        if (remaining < 0) {
+            // 재고 부족 → 롤백
+            redisService.incrementStock(couponId);
+            redisService.removeFromIssuedSet(couponId, userId);
+            throw new CouponSoldOutException("쿠폰이 모두 소진되었습니다");
+        }
+
+        // 3. Kafka 메시지 발행 (비동기 처리)
         kafkaProducer.publishCouponIssueRequest(couponId, userId);
 
-        log.info("쿠폰 발급 요청 접수: userId={}, couponId={}, couponName={}",
-                userId, couponId, coupon.getName());
+        log.info("쿠폰 발급 요청 접수: userId={}, couponId={}, remaining={}", userId, couponId, remaining);
 
         return new CouponQueueResponse(
                 true,

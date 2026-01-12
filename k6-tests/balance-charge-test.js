@@ -2,9 +2,14 @@
  * k6 부하 테스트 스크립트: 잔액 충전 API
  *
  * 테스트 목적:
- * - 잔액 충전 시 동시성 제어 검증 (Pessimistic Lock)
+ * - 잔액 충전 시 멱등성 검증 (Transaction ID 기반)
  * - 동일 사용자의 동시 충전 요청 처리 검증
- * - Balance 업데이트 트랜잭션 성능 측정
+ * - 원자적 UPDATE 트랜잭션 성능 측정
+ *
+ * 동시성 제어 방식:
+ * - Transaction ID + Unique 제약으로 중복 방지
+ * - 원자적 UPDATE (WHERE 조건)로 동시성 보장
+ * - 분산락 미사용 (DB 레벨 제약으로 충분)
  *
  * 실행 방법:
  * k6 run balance-charge-test.js
@@ -57,9 +62,9 @@ export const options = {
 // 환경 설정
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8081';
 
-// 테스트 사용자 ID 생성 (DataSeeder로 생성된 test-user-1 ~ test-user-100)
+// 테스트 사용자 ID 생성 (LoadTestDataSeeder로 생성된 test-user-1 ~ test-user-150000)
 function getRandomUserId() {
-  const randomNum = Math.floor(Math.random() * 100) + 1;
+  const randomNum = Math.floor(Math.random() * 150000) + 1;
   return `test-user-${randomNum}`;
 }
 
@@ -80,6 +85,7 @@ export function concurrentChargeTest() {
   const amount = getRandomAmount();
 
   const payload = JSON.stringify({
+    transactionId: `txn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     amount: amount
   });
 
@@ -146,6 +152,7 @@ export function loadTest() {
   const amount = getRandomAmount();
 
   const payload = JSON.stringify({
+    transactionId: `txn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     amount: amount
   });
 
@@ -245,12 +252,13 @@ function generateTextSummary(data) {
   - 동시성 충돌 (409/423): ${conflictCount}
 
 동시성 제어 분석:
-  - 동시성 충돌이 0에 가까우면: Lock이 정상 작동
-  - 동시성 충돌이 많으면: Lock 타임아웃 설정 확인 필요
-  - p95 > 1500ms: Lock 대기 시간 또는 DB Connection Pool 확인
+  - 동시성 충돌이 0에 가까우면: Transaction ID 멱등성 정상 작동
+  - 중복 충전 시도 시: 기존 결과 반환 (409 에러 아님)
+  - p95 > 1500ms: DB Connection Pool 또는 네트워크 확인
 
 병목 분석 포인트:
-  - Pessimistic Lock으로 인한 대기 시간
+  - 원자적 UPDATE 쿼리 성능
+  - Unique 제약 조건 체크 시간
   - DB Connection Pool 크기
   - 트랜잭션 처리 시간
 

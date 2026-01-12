@@ -102,6 +102,7 @@ public class PaymentService {
             // 잔액 차감 이력 저장
             BalanceHistory history = BalanceHistory.builder()
                     .userId(user.getUserId())
+                    .transactionId("ORDER-" + order.getOrderId())  // 주문 ID 기반 거래 ID
                     .amount(-order.getFinalAmount())  // 음수로 기록 (차감)
                     .previousBalance(previousBalance)
                     .currentBalance(user.getBalance().amount())

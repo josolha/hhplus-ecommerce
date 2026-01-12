@@ -54,6 +54,9 @@ public class RealDataSeeder {
         System.out.println("=== 실제 운영 데이터 생성 시작 ===");
         long startTime = System.currentTimeMillis();
 
+        // 기존 데이터 전체 삭제
+        clearAllData();
+
         seedUsers();
         seedProducts();
         seedCoupons();
@@ -70,6 +73,28 @@ public class RealDataSeeder {
         System.out.println("소요 시간: " + (endTime - startTime) / 1000.0 + "초");
 
         printDataCounts();
+    }
+
+    /**
+     * 기존 데이터 전체 삭제 (외래키 제약 순서 고려)
+     */
+    private void clearAllData() {
+        System.out.println("기존 데이터 삭제 중...");
+        long start = System.currentTimeMillis();
+
+        // 외래키 제약 순서에 따라 삭제 (자식 → 부모)
+        jdbcTemplate.execute("DELETE FROM payments");
+        jdbcTemplate.execute("DELETE FROM order_items");
+        jdbcTemplate.execute("DELETE FROM orders");
+        jdbcTemplate.execute("DELETE FROM cart_items");
+        jdbcTemplate.execute("DELETE FROM carts");
+        jdbcTemplate.execute("DELETE FROM balance_history");
+        jdbcTemplate.execute("DELETE FROM user_coupons");
+        jdbcTemplate.execute("DELETE FROM coupons");
+        jdbcTemplate.execute("DELETE FROM products");
+        jdbcTemplate.execute("DELETE FROM users");
+
+        System.out.printf("기존 데이터 삭제 완료 (%.2f초)%n", (System.currentTimeMillis() - start) / 1000.0);
     }
 
     /**
@@ -219,8 +244,8 @@ public class RealDataSeeder {
         System.out.println("UserCoupon 데이터 생성 중...");
         long start = System.currentTimeMillis();
 
-        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at, version) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO user_coupons (id, user_id, coupon_id, issued_at, used_at, expires_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         // 전체 사용자의 30%가 쿠폰 보유
         int userCouponCount = (int) (USER_COUNT * 0.3);
@@ -255,7 +280,6 @@ public class RealDataSeeder {
                     ps.setTimestamp(4, Timestamp.valueOf(issuedAt));
                     ps.setTimestamp(5, usedAt != null ? Timestamp.valueOf(usedAt) : null);
                     ps.setTimestamp(6, Timestamp.valueOf(expiresAt));
-                    ps.setLong(7, 0L);  // version
                 }
 
                 @Override
@@ -276,8 +300,8 @@ public class RealDataSeeder {
         System.out.println("BalanceHistory 데이터 생성 중...");
         long start = System.currentTimeMillis();
 
-        String sql = "INSERT INTO balance_history (user_id, amount, previous_balance, current_balance, payment_method, charged_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO balance_history (user_id, transaction_id, amount, previous_balance, current_balance, payment_method, charged_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         int historyCount = USER_COUNT * 5;
 
@@ -295,6 +319,7 @@ public class RealDataSeeder {
                 public void setValues(PreparedStatement ps, int i) throws SQLException {
                     int idx = finalStartIdx + i;
                     String userId = userIds.get(random.nextInt(userIds.size()));
+                    String transactionId = "TXN-" + UUID.randomUUID().toString();  // 고유한 거래 ID
                     long amount = (random.nextInt(100) + 1) * 1000L; // 1,000 ~ 100,000원
 
                     // 이전 잔액과 현재 잔액 (충전 시뮬레이션)
@@ -305,11 +330,12 @@ public class RealDataSeeder {
                     LocalDateTime chargedAt = LocalDateTime.now().minusDays(random.nextInt(90));
 
                     ps.setString(1, userId);
-                    ps.setLong(2, amount);
-                    ps.setLong(3, previousBalance);
-                    ps.setLong(4, currentBalance);
-                    ps.setString(5, paymentMethod);
-                    ps.setTimestamp(6, Timestamp.valueOf(chargedAt));
+                    ps.setString(2, transactionId);  // transaction_id 추가
+                    ps.setLong(3, amount);
+                    ps.setLong(4, previousBalance);
+                    ps.setLong(5, currentBalance);
+                    ps.setString(6, paymentMethod);
+                    ps.setTimestamp(7, Timestamp.valueOf(chargedAt));
                 }
 
                 @Override
@@ -371,7 +397,7 @@ public class RealDataSeeder {
 
     /**
      * 장바구니 아이템 생성
-     * 각 장바구니에 1~5개의 상품
+     * 각 장바구니에 3개 상품 (중복 없음)
      */
     private void seedCartItems() {
         System.out.println("CartItem 데이터 생성 중...");
@@ -380,15 +406,15 @@ public class RealDataSeeder {
         String sql = "INSERT INTO cart_items (cart_id, product_id, quantity, added_at) " +
                 "VALUES (?, ?, ?, ?)";
 
-        // 장바구니당 평균 2개 상품
-        int avgItemsPerCart = 2;
-        int cartItemCount = USER_COUNT * avgItemsPerCart;
+        // 각 장바구니당 3개 상품 = 총 30,000개 아이템
+        final int ITEMS_PER_CART = 3;
+        final int TOTAL_ITEMS = USER_COUNT * ITEMS_PER_CART;
 
         // 배치 처리
         int batchSize = 1000;
-        for (int batch = 0; batch < (cartItemCount + batchSize - 1) / batchSize; batch++) {
+        for (int batch = 0; batch < (TOTAL_ITEMS + batchSize - 1) / batchSize; batch++) {
             int startIdx = batch * batchSize;
-            int endIdx = Math.min((batch + 1) * batchSize, cartItemCount);
+            int endIdx = Math.min((batch + 1) * batchSize, TOTAL_ITEMS);
 
             final int finalStartIdx = startIdx;
             final int finalEndIdx = endIdx;
@@ -398,9 +424,10 @@ public class RealDataSeeder {
                 public void setValues(PreparedStatement ps, int i) throws SQLException {
                     int idx = finalStartIdx + i;
 
-                    // 각 사용자의 장바구니 (사용자당 1개 장바구니)
-                    int userIdx = idx / avgItemsPerCart;
-                    String userId = userIds.get(userIdx % userIds.size());
+                    int cartIdx = idx / ITEMS_PER_CART;  // 장바구니 번호
+                    int itemIdx = idx % ITEMS_PER_CART;  // 아이템 순서 (0~2)
+
+                    String userId = userIds.get(cartIdx % userIds.size());
 
                     // userIdToCartId 매핑에서 실제 cartId 가져오기
                     String cartId = userIdToCartId.get(userId);
@@ -408,12 +435,15 @@ public class RealDataSeeder {
                         throw new IllegalStateException("Cart not found for userId: " + userId);
                     }
 
-                    String productId = productIds.get(random.nextInt(productIds.size()));
-                    int quantity = random.nextInt(5) + 1; // 1~5개
+                    // 각 장바구니에 서로 다른 상품 (중복 없음)
+                    int productIndex = (cartIdx * ITEMS_PER_CART + itemIdx) % productIds.size();
+                    String productId = productIds.get(productIndex);
+
+                    int quantity = 2;  // 고정 수량 2개
 
                     LocalDateTime addedAt = LocalDateTime.now().minusDays(random.nextInt(7));
 
-                    ps.setString(1, cartId);  // 실제 cartId 사용
+                    ps.setString(1, cartId);
                     ps.setString(2, productId);
                     ps.setInt(3, quantity);
                     ps.setTimestamp(4, Timestamp.valueOf(addedAt));
@@ -426,7 +456,7 @@ public class RealDataSeeder {
             });
         }
 
-        System.out.printf("CartItem 생성 완료: %d건 (%.2f초)%n", cartItemCount, (System.currentTimeMillis() - start) / 1000.0);
+        System.out.printf("CartItem 생성 완료: %d건 (%.2f초)%n", TOTAL_ITEMS, (System.currentTimeMillis() - start) / 1000.0);
     }
 
     /**

@@ -29,8 +29,11 @@ public class LoadTestDataSeeder {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private org.springframework.data.redis.core.RedisTemplate<String, String> redisTemplate;
+
     // 테스트 데이터 개수
-    private static final int TEST_USER_COUNT = 100000;
+    private static final int TEST_USER_COUNT = 150000;       // Sequential 120K + 여유분
     private static final int TEST_COUPON_QUANTITY = 100000;  // 쿠폰 재고
     private static final int TEST_PRODUCT_STOCK = 10000;     // 상품 재고
 
@@ -44,10 +47,10 @@ public class LoadTestDataSeeder {
         clearTestData();
 
         // 테스트 데이터 생성
-        seedTestUsers();           // test-user-1 ~ test-user-100
-        seedTestCoupon();          // test-coupon-1 (재고 10,000개)
+        seedTestUsers();           // test-user-1 ~ test-user-150000
+        seedTestCoupon();          // test-coupon-1 (재고 100,000개)
         seedTestProducts();        // test-product-1 ~ test-product-10
-        seedTestCarts();           // test-cart-1 ~ test-cart-100
+        seedTestCarts();           // test-cart-1 ~ test-cart-150000
         seedTestCartItems();       // 각 장바구니에 상품 1개씩
 
         long endTime = System.currentTimeMillis();
@@ -63,6 +66,7 @@ public class LoadTestDataSeeder {
     private void clearTestData() {
         System.out.println("기존 테스트 데이터 삭제 중...");
 
+        // 1. DB 삭제
         jdbcTemplate.update("DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id LIKE 'test-user-%')");
         jdbcTemplate.update("DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE user_id LIKE 'test-user-%')");
         jdbcTemplate.update("DELETE FROM orders WHERE user_id LIKE 'test-user-%'");
@@ -73,12 +77,30 @@ public class LoadTestDataSeeder {
         jdbcTemplate.update("DELETE FROM coupons WHERE id LIKE 'test-coupon-%'");
         jdbcTemplate.update("DELETE FROM products WHERE id LIKE 'test-product-%'");
 
+        // 2. Redis 초기화 (쿠폰 관련 키 삭제 및 재고 설정)
+        System.out.println("Redis 쿠폰 데이터 초기화 중...");
+        try {
+            // test-coupon-1 관련 Redis 키 삭제
+            redisTemplate.delete("coupon:issued:test-coupon-1");   // 발급된 사용자 Set
+            redisTemplate.delete("coupon:sold-out:test-coupon-1"); // 품절 플래그
+
+            // Redis 재고 초기화 ⭐
+            redisTemplate.opsForValue().set(
+                "coupon:stock:test-coupon-1",
+                String.valueOf(TEST_COUPON_QUANTITY)
+            );
+
+            System.out.println("Redis 쿠폰 데이터 초기화 완료 (재고: " + TEST_COUPON_QUANTITY + "개)");
+        } catch (Exception e) {
+            System.out.println("Redis 초기화 실패 (Redis 서버 미실행 가능성): " + e.getMessage());
+        }
+
         System.out.println("기존 테스트 데이터 삭제 완료");
     }
 
     /**
-     * 테스트 유저 100명 생성
-     * ID: test-user-1 ~ test-user-100
+     * 테스트 유저 150,000명 생성
+     * ID: test-user-1 ~ test-user-150000
      * 잔액: 각 1,000,000원
      */
     private void seedTestUsers() {
@@ -202,32 +224,46 @@ public class LoadTestDataSeeder {
     }
 
     /**
-     * 테스트 장바구니 아이템 100개 생성
-     * 각 장바구니에 test-product-1 상품 1개씩
+     * 테스트 장바구니 아이템 생성
+     * 각 장바구니에 test-product-1~10 중 3개씩 (중복 없음)
      */
     private void seedTestCartItems() {
         System.out.println("테스트 장바구니 아이템 생성 중...");
 
         String sql = "INSERT INTO cart_items (cart_id, product_id, quantity, added_at) VALUES (?, ?, ?, ?)";
 
+        // 각 장바구니당 3개 상품 = 총 450,000개 아이템
+        final int ITEMS_PER_CART = 3;
+        final int TOTAL_ITEMS = TEST_USER_COUNT * ITEMS_PER_CART;
+
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                String cartId = "test-cart-" + (i + 1);
+                int cartIdx = i / ITEMS_PER_CART;  // 장바구니 번호 (0~149999)
+                int itemIdx = i % ITEMS_PER_CART;  // 아이템 순서 (0~2)
+
+                String cartId = "test-cart-" + (cartIdx + 1);
+
+                // 각 장바구니에 product-1, product-4, product-7 (겹치지 않게)
+                int productNum = (itemIdx * 3) + 1;
+                String productId = "test-product-" + productNum;
+
+                int quantity = 2;  // 고정 수량 2개
 
                 ps.setString(1, cartId);
-                ps.setString(2, "test-product-1");
-                ps.setInt(3, 1);
+                ps.setString(2, productId);
+                ps.setInt(3, quantity);
                 ps.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
             }
 
             @Override
             public int getBatchSize() {
-                return TEST_USER_COUNT;
+                return TOTAL_ITEMS;
             }
         });
 
-        System.out.printf("테스트 장바구니 아이템 생성 완료: %d개%n", TEST_USER_COUNT);
+        System.out.printf("테스트 장바구니 아이템 생성 완료: %d개 (장바구니당 %d개)%n",
+                TOTAL_ITEMS, ITEMS_PER_CART);
     }
 
     /**
@@ -239,7 +275,7 @@ public class LoadTestDataSeeder {
         System.out.println("✅ 쿠폰: test-coupon-1 (재고 " + TEST_COUPON_QUANTITY + "개)");
         System.out.println("✅ 상품: test-product-1 ~ test-product-10 (각 재고 " + TEST_PRODUCT_STOCK + "개)");
         System.out.println("✅ 장바구니: test-cart-1 ~ test-cart-" + TEST_USER_COUNT);
-        System.out.println("✅ 장바구니 아이템: 각 장바구니에 test-product-1 x 1개");
+        System.out.println("✅ 장바구니 아이템: 각 장바구니에 상품 3개 (product-1, 4, 7 각 2개)");
 
         System.out.println("\n=== k6 부하 테스트 시나리오 ===");
         System.out.println("1. 쿠폰 발급 테스트:");

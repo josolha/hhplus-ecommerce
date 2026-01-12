@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateCouponUseCase {
 
     private final CouponRepository couponRepository;
+    private final com.sparta.ecommerce.application.coupon.service.CouponIssueRedisService redisService;
 
     @Transactional
     public CouponResponse execute(CreateCouponRequest request) {
@@ -42,10 +43,15 @@ public class CreateCouponUseCase {
         // 3. 저장 (UUID 자동 생성됨)
         Coupon savedCoupon = couponRepository.save(coupon);
 
-        log.info("쿠폰 생성 완료: couponId={}, name={}, quantity={}",
-                savedCoupon.getCouponId(), savedCoupon.getName(), request.totalQuantity());
-
-        // 4. Kafka Consumer가 자동으로 메시지를 처리하므로 별도 Worker 시작 불필요
+        // 4. Redis 재고 초기화 ⭐
+        try {
+            redisService.initializeStock(savedCoupon.getCouponId(), request.totalQuantity());
+            log.info("쿠폰 생성 완료 (Redis 재고 초기화): couponId={}, name={}, quantity={}",
+                    savedCoupon.getCouponId(), savedCoupon.getName(), request.totalQuantity());
+        } catch (Exception e) {
+            log.error("Redis 재고 초기화 실패 (쿠폰은 생성됨): couponId={}", savedCoupon.getCouponId(), e);
+            // DB는 저장되었으므로 Redis 실패해도 계속 진행
+        }
 
         // 5. 응답 변환
         return CouponResponse.from(savedCoupon);

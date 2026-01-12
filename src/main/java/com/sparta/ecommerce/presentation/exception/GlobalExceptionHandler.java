@@ -3,6 +3,7 @@ package com.sparta.ecommerce.presentation.exception;
 
 import com.sparta.ecommerce.common.exception.BusinessException;
 import com.sparta.ecommerce.common.exception.ErrorCode;
+import com.sparta.ecommerce.domain.coupon.exception.DuplicateCouponIssueException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     /**
-     * 비즈니스 예외 처리
+     * 중복 쿠폰 발급 예외 처리 (409 Conflict)
+     * 품절(400)과 구분하기 위해 별도 처리
+     */
+    @ExceptionHandler(DuplicateCouponIssueException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateCouponIssueException(DuplicateCouponIssueException e) {
+        ErrorResponse errorResponse = new ErrorResponse(
+            e.getCode(),
+            e.getMessage()
+        );
+        return ResponseEntity
+            .status(HttpStatus.CONFLICT)  // 409
+            .body(errorResponse);
+    }
+
+    /**
+     * 비즈니스 예외 처리 (400 Bad Request)
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {

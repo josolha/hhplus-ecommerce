@@ -841,7 +841,6 @@ max-lifetime: 1800000
 - `PERFORMANCE_OPTIMIZATION_REPORT.md`: 주문/결제 API 최적화 상세 보고서
 
 **테스트 스크립트:**
-- `k6-tests/coupon-issue-test.js`: 쿠폰 발급 부하 테스트 스크립트
 - `k6-tests/balance-charge-test.js`: 잔액 충전 부하 테스트 스크립트
 - `k6-tests/order-payment-test.js`: 주문/결제 부하 테스트 스크립트
 

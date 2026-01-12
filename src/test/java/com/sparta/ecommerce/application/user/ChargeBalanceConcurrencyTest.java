@@ -89,9 +89,10 @@ public class ChargeBalanceConcurrencyTest {
 
             // when
             for (int i = 0; i < threadCount; i++) {
+                final int index = i;
                 executorService.execute(() -> {
                     try {
-                        ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
+                        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-" + index + "-" + System.nanoTime(), chargeAmount);
                         chargeUserBalanceUseCase.execute(testUserId, request);
                         successCount.incrementAndGet();
                     } catch (Exception e) {
@@ -138,9 +139,10 @@ public class ChargeBalanceConcurrencyTest {
 
             // when
             for (int i = 0; i < threadCount; i++) {
+                final int index = i;
                 executorService.execute(() -> {
                     try {
-                        ChargeBalanceRequest request = new ChargeBalanceRequest(chargeAmount);
+                        ChargeBalanceRequest request = new ChargeBalanceRequest("txn-test-" + index + "-" + System.nanoTime(), chargeAmount);
                         chargeUserBalanceUseCase.execute(testUserId, request);
                         successCount.incrementAndGet();
                     } catch (Exception e) {

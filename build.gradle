@@ -86,3 +86,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// bootRun 메모리 설정 (Kafka Consumer OutOfMemoryError 방지)
+bootRun {
+	jvmArgs = ['-Xmx2g', '-Xms1g']
+}

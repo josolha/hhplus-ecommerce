@@ -52,9 +52,6 @@ public class UserCoupon {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    @Version
-    private Long version = 0L;
-
     @PrePersist
     protected void onCreate() {
         if (this.issuedAt == null) {

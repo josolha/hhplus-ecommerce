@@ -12,7 +12,6 @@
   - 100,000명 테스트 데이터 생성 (LoadTestDataSeeder)
 
 - [x] 적합한 테스트 스크립트를 작성하고 수행
-  - `k6-tests/coupon-issue-test.js`: 쿠폰 발급 (VU 50→200, TPS 372 달성)
   - `k6-tests/balance-charge-test.js`: 잔액 충전 (VU 150, TPS 551 달성)
   - `k6-tests/order-payment-test.js`: 주문/결제 (VU 100, TPS 81 달성)
   - 상세 결과: `docs/loadtest/LOAD_TEST_TOTAL.md`

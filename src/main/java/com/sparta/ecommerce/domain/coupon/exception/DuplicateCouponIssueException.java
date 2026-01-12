@@ -8,6 +8,6 @@ import com.sparta.ecommerce.common.exception.ErrorCode;
  */
 public class DuplicateCouponIssueException extends BusinessException {
     public DuplicateCouponIssueException(String couponId) {
-        super(ErrorCode.C001, "이미 발급받은 쿠폰입니다: " + couponId);
+        super(ErrorCode.C006, "이미 발급받은 쿠폰입니다: " + couponId);
     }
 }
