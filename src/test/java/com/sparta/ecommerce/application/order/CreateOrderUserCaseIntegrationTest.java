@@ -3,6 +3,7 @@ package com.sparta.ecommerce.application.order;
 import com.sparta.ecommerce.IntegrationTestBase;
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
+import com.sparta.ecommerce.application.order.usecase.CreateOrderUseCase;
 import com.sparta.ecommerce.domain.cart.entity.Cart;
 import com.sparta.ecommerce.domain.cart.entity.CartItem;
 import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;

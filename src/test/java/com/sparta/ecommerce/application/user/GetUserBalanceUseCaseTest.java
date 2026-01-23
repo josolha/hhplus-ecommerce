@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
 import com.sparta.ecommerce.application.user.dto.UserBalanceResponse;
+import com.sparta.ecommerce.application.user.usecase.GetUserBalanceUseCase;
 import com.sparta.ecommerce.domain.user.entity.User;
 import com.sparta.ecommerce.domain.user.repository.UserRepository;
 import com.sparta.ecommerce.domain.user.exception.UserNotFoundException;

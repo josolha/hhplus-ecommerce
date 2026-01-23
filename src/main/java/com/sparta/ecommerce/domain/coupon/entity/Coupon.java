@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.domain.coupon.entity;
 
-import com.sparta.ecommerce.domain.common.BaseEntity;
+import com.sparta.ecommerce.infrastructure.jpa.BaseEntity;
 import com.sparta.ecommerce.domain.coupon.DiscountType;
 import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
 import jakarta.persistence.Column;

@@ -34,4 +34,10 @@ public interface UserCouponRepository extends JpaRepository<UserCoupon, String> 
      * 쿠폰 ID로 발급된 모든 사용자 쿠폰 조회
      */
     List<UserCoupon> findByCouponId(String couponId);
+
+    /**
+     * 사용자 ID와 쿠폰 ID로 UserCoupon 조회 (단건)
+     */
+    java.util.Optional<UserCoupon> findByUserIdAndCouponId(String userId, String couponId);
+
 }

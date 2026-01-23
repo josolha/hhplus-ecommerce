@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserCoupon {
 
     @Id
@@ -51,9 +51,6 @@ public class UserCoupon {
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
-
-    @Version
-    private Long version = 0L;
 
     @PrePersist
     protected void onCreate() {

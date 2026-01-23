@@ -1,9 +1,9 @@
 package com.sparta.ecommerce.presentation.controller.cart;
 
-import com.sparta.ecommerce.application.cart.AddToCartUseCase;
-import com.sparta.ecommerce.application.cart.GetCartUseCase;
-import com.sparta.ecommerce.application.cart.RemoveFromCartUseCase;
-import com.sparta.ecommerce.application.cart.UpdateCartItemUseCase;
+import com.sparta.ecommerce.application.cart.usecase.AddToCartUseCase;
+import com.sparta.ecommerce.application.cart.usecase.GetCartUseCase;
+import com.sparta.ecommerce.application.cart.usecase.RemoveFromCartUseCase;
+import com.sparta.ecommerce.application.cart.usecase.UpdateCartItemUseCase;
 import com.sparta.ecommerce.application.cart.dto.AddToCartRequest;
 import com.sparta.ecommerce.application.cart.dto.CartItemResponse;
 import com.sparta.ecommerce.application.cart.dto.CartResponse;
@@ -66,7 +66,7 @@ public class CartController {
     @PatchMapping("/items/{cartItemId}")
     public ResponseEntity<CartItemResponse> updateCartItemQuantity(
             @Parameter(description = "사용자 ID") @RequestParam String userId,
-            @Parameter(description = "장바구니 항목 ID") @PathVariable String cartItemId,
+            @Parameter(description = "장바구니 항목 ID") @PathVariable Long cartItemId,
             @Valid @RequestBody UpdateCartItemRequest request) {
 
         CartItemResponse response = updateCartItemUseCase.execute(userId, cartItemId, request);
@@ -83,7 +83,7 @@ public class CartController {
             @Parameter(description = "사용자 ID")
             @RequestParam String userId,
             @Parameter(description = "장바구니 항목 ID")
-            @PathVariable String cartItemId) {
+            @PathVariable Long cartItemId) {
 
         removeFromCartUseCase.execute(userId, cartItemId);
         return ResponseEntity.ok(Map.of("message", "장바구니에서 삭제되었습니다"));

@@ -18,12 +18,10 @@ public record OrderResponse(
         long discountAmount,
         @Schema(description = "최종 결제 금액", example = "1450000")
         long finalAmount,
-        @Schema(description = "결제 후 잔액", example = "550000")
-        long remainingBalance,
         @Schema(description = "주문 생성 일시", example = "2025-11-06T22:00:00")
         LocalDateTime createdAt
 ) {
-    public static OrderResponse from(Order order, List<OrderItem> orderItems, long remainingBalance) {
+    public static OrderResponse from(Order order, List<OrderItem> orderItems) {
         List<OrderItemResponse> itemResponses = orderItems.stream()
                 .map(OrderItemResponse::from)
                 .toList();
@@ -34,7 +32,6 @@ public record OrderResponse(
                 order.getTotalAmount(),
                 order.getDiscountAmount(),
                 order.getFinalAmount(),
-                remainingBalance,
                 order.getCreatedAt()
         );
     }

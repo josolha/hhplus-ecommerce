@@ -1,9 +1,9 @@
 package com.sparta.ecommerce.presentation.controller.user;
 
 import com.sparta.ecommerce.application.coupon.dto.UserCouponResponse;
-import com.sparta.ecommerce.application.user.ChargeUserBalanceUseCase;
-import com.sparta.ecommerce.application.user.GetUserBalanceUseCase;
-import com.sparta.ecommerce.application.user.GetUserCouponsUseCase;
+import com.sparta.ecommerce.application.user.usecase.ChargeUserBalanceUseCase;
+import com.sparta.ecommerce.application.user.usecase.GetUserBalanceUseCase;
+import com.sparta.ecommerce.application.user.usecase.GetUserCouponsUseCase;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceRequest;
 import com.sparta.ecommerce.application.user.dto.ChargeBalanceResponse;
 import com.sparta.ecommerce.application.user.dto.UserBalanceResponse;
@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 사용자 API

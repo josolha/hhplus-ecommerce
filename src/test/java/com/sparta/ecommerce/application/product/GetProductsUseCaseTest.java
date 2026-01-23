@@ -1,6 +1,7 @@
 package com.sparta.ecommerce.application.product;
 
 import com.sparta.ecommerce.application.product.dto.ProductResponse;
+import com.sparta.ecommerce.application.product.usecase.GetProductsUseCase;
 import com.sparta.ecommerce.domain.product.entity.Product;
 import com.sparta.ecommerce.domain.product.repository.ProductRepository;
 import com.sparta.ecommerce.domain.product.vo.Stock;

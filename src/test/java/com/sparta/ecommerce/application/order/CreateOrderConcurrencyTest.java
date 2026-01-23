@@ -2,6 +2,7 @@ package com.sparta.ecommerce.application.order;
 
 import com.sparta.ecommerce.application.order.dto.CreateOrderRequest;
 import com.sparta.ecommerce.application.order.dto.OrderResponse;
+import com.sparta.ecommerce.application.order.usecase.CreateOrderUseCase;
 import com.sparta.ecommerce.domain.cart.entity.Cart;
 import com.sparta.ecommerce.domain.cart.entity.CartItem;
 import com.sparta.ecommerce.domain.cart.repository.CartItemRepository;
@@ -72,7 +73,7 @@ public class CreateOrderConcurrencyTest {
     private List<User> testUsers;
     private List<String> userIds = new ArrayList<>();
     private List<String> cartIds = new ArrayList<>();
-    private List<String> cartItemIds = new ArrayList<>();
+    private List<Long> cartItemIds = new ArrayList<>();
 
     @BeforeEach
     public void setUp() {
@@ -181,7 +182,7 @@ public class CreateOrderConcurrencyTest {
         List<User> manyUsers = new ArrayList<>();
         List<String> manyUserIds = new ArrayList<>();
         List<String> manyCartIds = new ArrayList<>();
-        List<String> manyCartItemIds = new ArrayList<>();
+        List<Long> manyCartItemIds = new ArrayList<>();
 
         for (int i = 0; i < 100; i++) {
             User user = User.builder()

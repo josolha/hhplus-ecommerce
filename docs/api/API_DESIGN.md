@@ -163,7 +163,6 @@ items: [
 totalAmount: number           // 총 금액
 discountAmount: number        // 할인 금액
 finalAmount: number           // 최종 결제 금액
-remainingBalance: number      // 결제 후 잔액
 createdAt: string             // 주문 생성 일시
 ```
 

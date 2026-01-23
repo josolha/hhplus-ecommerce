@@ -8,12 +8,22 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * ⚠️ DEPRECATED: Kafka 방식으로 전환됨
+ *
  * 쿠폰 발급 큐 관리 서비스 (Redis Blocking Queue)
  *
- * 구조:
- * - Queue: coupon:queue:{couponId} (List - BRPOP으로 블로킹 처리)
- * - Issued Set: coupon:issued:{couponId} (Set) - 중복 방지용
+ * 변경 내역:
+ * - 이전: Redis Queue (List) 기반 큐 관리
+ * - 현재: Kafka Topic + CouponIssueRedisService로 대체
+ * - 이유: 메시지 영속성, 확장성, 모니터링 개선
+ *
+ * 대체 클래스:
+ * - CouponIssueRedisService: Redis Set 중복 체크 전용
+ * - CouponKafkaProducer/Consumer: 메시지 큐잉
+ *
+ * @deprecated Kafka 전환으로 더 이상 사용되지 않음
  */
+@Deprecated
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -124,5 +134,29 @@ public class CouponQueueService {
         String issuedSetKey = ISSUED_SET_PREFIX + couponId;
         redisTemplate.opsForSet().remove(issuedSetKey, userId);
         log.debug("발급 실패로 Set에서 제거: userId={}, couponId={}", userId, couponId);
+    }
+
+    /**
+     * Redis Set에만 추가 (Kafka 전용)
+     * Kafka 방식에서는 Queue(List)를 사용하지 않고 Kafka Topic을 사용하므로
+     * Set에만 추가하여 중복 체크만 수행
+     *
+     * @param couponId 쿠폰 ID
+     * @param userId 사용자 ID
+     * @return 추가 성공 시 1, 이미 존재 시 0
+     */
+    public Long addToIssuedSetOnly(String couponId, String userId) {
+        String issuedSetKey = ISSUED_SET_PREFIX + couponId;
+
+        // Set에 추가 시도
+        Long added = redisTemplate.opsForSet().add(issuedSetKey, userId);
+
+        if (added != null && added > 0) {
+            log.debug("발급 Set에 추가 완료 (Kafka 전용): userId={}, couponId={}", userId, couponId);
+        } else {
+            log.debug("이미 발급 요청한 사용자 (Kafka 전용): userId={}, couponId={}", userId, couponId);
+        }
+
+        return added;
     }
 }

@@ -19,7 +19,9 @@ import java.time.LocalDateTime;
  * 장바구니 항목 엔티티
  */
 @Entity
-@Table(name = "cart_items")
+@Table(name = "cart_items", indexes = {
+    @jakarta.persistence.Index(name = "idx_cart_id", columnList = "cart_id")
+})
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,8 +30,8 @@ public class CartItem {
 
     @Id
     @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String cartItemId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long cartItemId;
 
     @Column(name = "cart_id", nullable = false)
     private String cartId;

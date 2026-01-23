@@ -19,6 +19,16 @@ public interface UserRepository extends JpaRepository<User, String> {
      * 사용자 ID로 조회
      */
     Optional<User> findByUserId(String userId);
+
+    /**
+     * 잔액 원자적 업데이트 (충전)
+     *
+     * @param userId 사용자 ID
+     * @param amount 충전 금액
+     * @return 업데이트된 행 수
+     */
+    @Query("UPDATE User u SET u.balance.amount = u.balance.amount + :amount WHERE u.userId = :userId")
+    int updateBalanceByUserId(@Param("userId") String userId, @Param("amount") long amount);
 }
 /*
 public interface UserRepository {

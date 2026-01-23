@@ -33,8 +33,8 @@ public class OrderItem {
 
     @Id
     @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String orderItemId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long orderItemId;
 
     @Column(name = "order_id", nullable = false)
     private String orderId;

@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.domain.user.entity;
 
-import com.sparta.ecommerce.domain.common.BaseEntity;
+import com.sparta.ecommerce.infrastructure.jpa.BaseEntity;
 import com.sparta.ecommerce.domain.user.vo.Balance;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;

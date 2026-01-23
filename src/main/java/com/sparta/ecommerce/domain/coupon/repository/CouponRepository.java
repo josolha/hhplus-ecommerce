@@ -32,13 +32,15 @@ public interface CouponRepository extends JpaRepository<Coupon, String> {
     List<Coupon> findAvailableCoupons(@Param("now") LocalDateTime now);
 
     /**
-     * 쿠폰 발급 (재고 차감) - 직접 UPDATE 쿼리
+     * 쿠폰 발급 (재고 차감) - 원자적 UPDATE 쿼리
+     * 재고가 있을 때만 차감하여 음수 재고 방지
+     *
      * @param couponId 쿠폰 ID
-     * @return 업데이트된 행 수
+     * @return 업데이트된 행 수 (0이면 재고 부족, 1이면 성공)
      */
     @Modifying
     @Query("UPDATE Coupon c SET c.stock.issuedQuantity = c.stock.issuedQuantity + 1, " +
            "c.stock.remainingQuantity = c.stock.remainingQuantity - 1 " +
-           "WHERE c.couponId = :couponId")
+           "WHERE c.couponId = :couponId AND c.stock.remainingQuantity > 0")
     int issueCoupon(@Param("couponId") String couponId);
 }

@@ -48,11 +48,17 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     /**
      * 재고 차감 (직접 UPDATE 쿼리)
+     *
+     * DB 레벨 재고 검증 포함:
+     * - 재고가 충분할 때만 UPDATE 실행
+     * - 재고 부족 시 affected rows = 0 반환
+     * - 동시성 환경에서 재고 음수 방지
+     *
      * @param productId 상품 ID
      * @param amount 차감할 수량
-     * @return 업데이트된 행 수
+     * @return 업데이트된 행 수 (1: 성공, 0: 재고 부족)
      */
     @Modifying
-    @Query("UPDATE Product p SET p.stock.quantity = p.stock.quantity - :amount WHERE p.productId = :productId")
+    @Query("UPDATE Product p SET p.stock.quantity = p.stock.quantity - :amount WHERE p.productId = :productId AND p.stock.quantity >= :amount")
     int decreaseStock(@Param("productId") String productId, @Param("amount") int amount);
 }

@@ -1,7 +1,7 @@
 package com.sparta.ecommerce.domain.user.exception;
 
-import com.sparta.ecommerce.domain.common.exception.BusinessException;
-import com.sparta.ecommerce.domain.common.exception.ErrorCode;
+import com.sparta.ecommerce.common.exception.BusinessException;
+import com.sparta.ecommerce.common.exception.ErrorCode;
 
 /**
  * 사용자를 찾을 수 없을 때 발생하는 예외

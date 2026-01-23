@@ -24,11 +24,14 @@ public class BalanceHistory {
 
     @Id
     @Column(name="id")
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
+
+    @Column(name = "transaction_id", nullable = false, unique = true)
+    private String transactionId;
 
     @Column(nullable = false)
     private long amount;
@@ -51,7 +54,4 @@ public class BalanceHistory {
             chargedAt = LocalDateTime.now();
         }
     }
-
-
-
 }

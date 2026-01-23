@@ -8,6 +8,10 @@ import jakarta.validation.constraints.NotNull;
  * 잔액 충전 요청 DTO
  */
 public record ChargeBalanceRequest(
+        @Schema(description = "거래 고유 ID (중복 방지용)", example = "txn_20250108_123456")
+        @NotNull(message = "거래 ID는 필수입니다")
+        String transactionId,
+
         @Schema(description = "충전 금액", example = "50000")
         @NotNull(message = "충전 금액은 필수입니다")
         @Min(value = 1, message = "충전 금액은 1원 이상이어야 합니다")
