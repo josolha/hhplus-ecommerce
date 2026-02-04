@@ -1,4 +1,4 @@
-package com.sparta.ecommerce.application.coupon.service;
+package com.sparta.ecommerce.infrastructure.redis;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +105,10 @@ public class CouponIssueRedisService {
      *
      * @param couponId 쿠폰 ID
      * @param quantity 초기 재고 수량
+     *
+     * 주의: Redis DECR은 감소 후 값을 반환하므로,
+     * quantity명이 발급받으려면 quantity 값으로 초기화하면 됩니다.
+     * 예: quantity=5 → 5회 DECR → 4,3,2,1,0 (5명 발급)
      */
     public void initializeStock(String couponId, Integer quantity) {
         String stockKey = "coupon:stock:" + couponId;

@@ -4,6 +4,7 @@ import com.sparta.ecommerce.domain.coupon.exception.CouponExpiredException;
 import com.sparta.ecommerce.domain.coupon.exception.CouponSoldOutException;
 import com.sparta.ecommerce.domain.coupon.exception.DuplicateCouponIssueException;
 import com.sparta.ecommerce.domain.coupon.exception.InvalidCouponException;
+import com.sparta.ecommerce.infrastructure.redis.CouponIssueRedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

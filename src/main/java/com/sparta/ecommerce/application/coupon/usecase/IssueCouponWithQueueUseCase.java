@@ -1,6 +1,6 @@
 package com.sparta.ecommerce.application.coupon.usecase;
 
-import com.sparta.ecommerce.application.coupon.service.CouponIssueRedisService;
+import com.sparta.ecommerce.infrastructure.redis.CouponIssueRedisService;
 import com.sparta.ecommerce.application.coupon.dto.CouponQueueResponse;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.exception.CouponExpiredException;
@@ -55,12 +55,14 @@ public class IssueCouponWithQueueUseCase {
         }
 
         // 2. Redis 재고 원자적 감소 (선착순 결정) ⭐
+        // DECR 후 remaining 값 체크: 재고 5 → DECR → 4,3,2,1,0 (성공), -1 (실패)
+        // 따라서 remaining < 0 이면 재고 소진
         Long remaining = redisService.decrementStock(couponId);
 
-        if (remaining < 0) {
-            // 재고 부족 → 롤백
-            redisService.incrementStock(couponId);
+        if (remaining == null || remaining < 0) {
+            // 재고 부족 → Set에서 제거 + sold-out 플래그 설정
             redisService.removeFromIssuedSet(couponId, userId);
+            redisService.setSoldOutFlag(couponId);
             throw new CouponSoldOutException("쿠폰이 모두 소진되었습니다");
         }
 

@@ -5,6 +5,7 @@ import com.sparta.ecommerce.application.coupon.dto.CreateCouponRequest;
 import com.sparta.ecommerce.domain.coupon.entity.Coupon;
 import com.sparta.ecommerce.domain.coupon.repository.CouponRepository;
 import com.sparta.ecommerce.domain.coupon.vo.CouponStock;
+import com.sparta.ecommerce.infrastructure.redis.CouponIssueRedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateCouponUseCase {
 
     private final CouponRepository couponRepository;
-    private final com.sparta.ecommerce.application.coupon.service.CouponIssueRedisService redisService;
+    private final CouponIssueRedisService redisService;
 
     @Transactional
     public CouponResponse execute(CreateCouponRequest request) {
