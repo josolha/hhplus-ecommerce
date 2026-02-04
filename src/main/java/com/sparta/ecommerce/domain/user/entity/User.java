@@ -5,6 +5,8 @@ import com.sparta.ecommerce.domain.user.vo.Balance;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -31,14 +33,29 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Provider provider;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    @Column(nullable = true)
+    private String password; //LOCAL 만 필수
+
     @Embedded
     private Balance balance;
+
 
     /**
      * 잔액 충전

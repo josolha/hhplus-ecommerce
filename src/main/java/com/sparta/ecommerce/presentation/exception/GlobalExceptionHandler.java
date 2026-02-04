@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -37,7 +38,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 비즈니스 예외 처리 (400 Bad Request)
+     * 비즈니스 예외 처리
+     * - 인증 관련 예외 (AUTH*): 401 Unauthorized
+     * - 그 외 비즈니스 예외: 400 Bad Request
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
@@ -45,6 +48,15 @@ public class GlobalExceptionHandler {
             e.getCode(),
             e.getMessage()
         );
+
+        // 인증 관련 예외는 401 반환
+        if (e.getCode().startsWith("AUTH")) {
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(errorResponse);
+        }
+
+        // 그 외 비즈니스 예외는 400 반환
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(errorResponse);
@@ -73,6 +85,26 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
             ErrorCode.COMMON002.getCode(),
             e.getMessage()
+        );
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse);
+    }
+
+    /**
+     * Bean Validation 예외 처리 (@RequestBody @Valid 검증 실패)
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        // 첫 번째 필드 에러의 메시지 가져오기
+        String message = e.getBindingResult().getFieldErrors().stream()
+            .findFirst()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .orElse("입력값이 올바르지 않습니다");
+
+        ErrorResponse errorResponse = new ErrorResponse(
+            ErrorCode.COMMON001.getCode(),
+            message
         );
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

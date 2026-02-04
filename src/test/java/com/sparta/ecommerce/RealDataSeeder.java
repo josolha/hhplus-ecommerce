@@ -1,6 +1,7 @@
 package com.sparta.ecommerce;
 
 import net.datafaker.Faker;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +20,12 @@ import java.util.*;
 /**
  * 실제 운영 환경 데이터 생성기 (UUID 사용)
  * EXPLAIN 분석, 인덱스 성능 테스트, 쿼리 최적화를 위한 대량 더미 데이터 생성
+ * 수동으로만 실행 (자동 테스트에서 제외)
  *
  * 실행 방법:
  * ./gradlew test --tests "RealDataSeeder.seedAllData"
  */
+@Disabled("수동 실행 전용 - 자동 테스트에서 제외")
 @SpringBootTest
 @ActiveProfiles("local")
 @Commit

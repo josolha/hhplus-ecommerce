@@ -12,13 +12,19 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.Disabled;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Coupon Repository 통합 테스트
  * Testcontainers를 사용하여 실제 MySQL DB 제약조건 및 재고 관리 검증
+ *
+ * 쿠폰 재고 관리가 Redis 기반으로 변경되어 비활성화
+ * CouponStock VO는 더 이상 사용되지 않음 (Redis sorted set 사용)
  */
+@Disabled("Redis 기반 쿠폰 재고 관리로 아키텍처 변경 - CouponStock VO 미사용")
 @DisplayName("Coupon Repository 통합 테스트")
 public class CouponRepositoryTest extends IntegrationTestBase {
 

@@ -35,6 +35,42 @@ E-commerce core system built with Spring Boot 3.5.7 and Java 17. This is a backe
 ./gradlew test --info
 ```
 
+## Git Commit Convention
+
+**IMPORTANT**: 커밋 생성 시 다음 규칙을 **반드시** 준수하세요.
+
+### 커밋 타입
+- `feat`: 새로운 기능 추가
+- `fix`: 버그 수정
+- `refactor`: 코드 리팩토링
+- `docs`: 문서 수정
+- `test`: 테스트 추가/수정
+- `chore`: 빌드/설정 변경
+
+### 커밋 메시지 형식
+```
+type: 변경 내용 간단 설명
+
+- 변경된 파일과 구체적인 변경 내용을 상세히 작성
+- 여러 변경사항이 있다면 각각 나열
+```
+
+### 필수 규칙
+1. **절대로** "🤖 Generated with Claude Code" 메시지를 포함하지 마세요
+2. **절대로** "Co-Authored-By: Claude <noreply@anthropic.com>" 를 포함하지 마세요
+3. 변경된 파일명과 구체적인 변경 내용을 명시하세요
+4. 한글로 작성하세요
+5. 커밋 메시지는 간결하면서도 변경사항을 정확히 전달해야 합니다
+
+### 예시
+```
+feat: 사용자 인증 기능 추가
+
+- AuthService.java: JWT 기반 로그인 로직 구현
+- SecurityConfig.java: Spring Security 설정 추가
+- JwtProvider.java: 토큰 생성 및 검증 유틸리티 작성
+```
+
 ## System Architecture
 
 ### Core Features

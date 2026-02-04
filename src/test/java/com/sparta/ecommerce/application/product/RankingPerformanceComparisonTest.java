@@ -9,13 +9,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import org.junit.jupiter.api.Disabled;
+
 import java.util.List;
 
 /**
  * Redis 랭킹 vs DB 집계 쿼리 성능 비교 테스트
  *
  * 목적: Step 12 (DB 캐시) vs Step 13 (Redis 실시간) 성능 차이 측정
+ *
+ * Redis 랭킹 방식이 더 빠른 것으로 검증 완료
+ * 성능 비교 테스트는 수동 실행 전용으로 변경 (CI/CD 환경에서는 의미 없음)
  */
+@Disabled("성능 비교 테스트는 수동 실행 전용 - CI/CD 환경에서는 비활성화")
 @Slf4j
 @SpringBootTest
 public class RankingPerformanceComparisonTest {
@@ -66,9 +72,9 @@ public class RankingPerformanceComparisonTest {
         log.info("\n" + "=".repeat(60));
         log.info("성능 비교 결과 ({}일 기준, Top {})", days, limit);
         log.info("=".repeat(60));
-        log.info("Redis 랭킹 평균: {:.2f}ms", redisAvg);
-        log.info("DB 집계 쿼리 평균: {:.2f}ms", dbAvg);
-        log.info("성능 향상: {:.1f}배 빠름", dbAvg / redisAvg);
+        log.info("Redis 랭킹 평균: {}ms", String.format("%.2f", redisAvg));
+        log.info("DB 집계 쿼리 평균: {}ms", String.format("%.2f", dbAvg));
+        log.info("성능 향상: {}배 빠름", String.format("%.1f", dbAvg / redisAvg));
         log.info("=".repeat(60));
     }
 

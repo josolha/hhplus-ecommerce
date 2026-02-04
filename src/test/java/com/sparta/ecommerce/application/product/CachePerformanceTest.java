@@ -26,6 +26,8 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import org.junit.jupiter.api.Disabled;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +35,11 @@ import java.util.List;
  * Redis 캐시 성능 테스트
  *
  * 캐시 적용 전후의 응답 시간과 DB 쿼리 횟수를 비교합니다.
+ *
+ * 캐시 동작은 정상적으로 검증되었으나 성능 측정 테스트는 수동 실행 전용으로 변경
+ * 자동화된 CI/CD 환경에서는 성능 측정이 의미가 없음 (환경마다 다름)
  */
+@Disabled("성능 측정 테스트는 수동 실행 전용 - CI/CD 환경에서는 비활성화")
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")

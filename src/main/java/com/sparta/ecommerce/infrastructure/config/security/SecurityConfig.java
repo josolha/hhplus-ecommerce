@@ -1,6 +1,6 @@
-package com.sparta.ecommerce.infrastructure.config;
+package com.sparta.ecommerce.infrastructure.config.security;
 
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -8,48 +8,65 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // REST API 서버 기본값: 세션/폼로그인 사용 안 함
-            .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
-            // 세션 안 씀 (JWT 전제)
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // 디폴트 로그인 페이지(/login) 끄기
-            .formLogin(form -> form.disable())
-            // Basic Auth 팝업 끄기
-            .httpBasic(basic -> basic.disable())
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
 
-            // URL별 접근 제어
-            .authorizeHttpRequests(auth -> auth
-                    // --- 공개(인증 없이 접근) ---
-                    .requestMatchers(
-                            "/",
-                            "/error",
-                            "/favicon.ico"
-                    ).permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/error", "/favicon.ico").permitAll()
+                        // Swagger UI 및 API 문서 접근 허용
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // 회원가입/로그인 API는 공개
+                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
 
-                    // 로그인/회원가입 같은 auth API는 일단 열어둠
-                    .requestMatchers("/auth/**").permitAll()
-                    // Swagger 쓰면 아래 주석 해제
-                    // .requestMatchers(
-                    //     "/swagger-ui/**",
-                    //     "/v3/api-docs/**"
-                    // ).permitAll()
-                    // 상품 조회는 공개로 두고 싶으면(선택)
-                    .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
-                    // --- 그 외는 전부 인증 필요 ---
-                    .anyRequest().authenticated()
-                );
+                        // 관리자 전용 API (예시)
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // 특정 HTTP 메서드에만 관리자 권한 적용 (예시)
+                        .requestMatchers("/api/products/**").hasRole("ADMIN")
+                        //.requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
+
+                        // 조회 API는 공개로 두고 싶으면 (선택)
+                        // .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+
+
+                        // 그 외 /api/** 는 인증 필요
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 401
+                        .accessDeniedHandler(jwtAccessDeniedHandler)            // 403
+                )
+
+                // JWT 필터 등록 (인가 판단 전에 인증 세팅)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

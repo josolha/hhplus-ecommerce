@@ -1,5 +1,137 @@
 # 이커머스 API 설계
 
+## 0. 인증/인가 API
+
+### 회원가입
+#### **`POST /api/auth/signup`**
+
+**Request:**
+```json
+{
+  "email": "user@example.com",      // 이메일 (필수, 이메일 형식)
+  "password": "password123",        // 비밀번호 (필수, 8-20자)
+  "name": "홍길동",                  // 이름 (필수)
+  "phoneNumber": "010-1234-5678"    // 전화번호 (선택)
+}
+```
+
+**Response:**
+```json
+HTTP Status: 201 Created
+{
+  "message": "회원가입이 완료되었습니다."
+}
+```
+
+**Error (이메일 중복):**
+```json
+HTTP Status: 400 Bad Request
+{
+  "error": "AUTH001",
+  "message": "이미 사용 중인 이메일입니다."
+}
+```
+
+### 로그인
+#### **`POST /api/auth/login`**
+
+**Request:**
+```json
+{
+  "email": "user@example.com",      // 이메일
+  "password": "password123"         // 비밀번호
+}
+```
+
+**Response:**
+```json
+HTTP Status: 200 OK
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",   // Access Token (30분)
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  // Refresh Token (7일)
+}
+```
+
+**Error (인증 실패):**
+```json
+HTTP Status: 401 Unauthorized
+{
+  "error": "AUTH002",
+  "message": "이메일 또는 비밀번호가 올바르지 않습니다."
+}
+```
+
+**Error (소셜 계정):**
+```json
+HTTP Status: 400 Bad Request
+{
+  "error": "AUTH003",
+  "message": "소셜 로그인 계정입니다."
+}
+```
+
+### Access Token 재발급
+#### **`POST /api/auth/refresh`**
+
+**Request:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  // Refresh Token
+}
+```
+
+**Response:**
+```json
+HTTP Status: 200 OK
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",   // 새로운 Access Token
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  // 새로운 Refresh Token (Rotation)
+}
+```
+
+**Error (유효하지 않은 토큰):**
+```json
+HTTP Status: 401 Unauthorized
+{
+  "error": "AUTH004",
+  "message": "유효하지 않은 Refresh Token입니다."
+}
+```
+
+**Error (로그아웃된 토큰/탈취 의심):**
+```json
+HTTP Status: 401 Unauthorized
+{
+  "error": "AUTH005",
+  "message": "탈취 의심으로 모든 세션이 종료되었습니다. 다시 로그인해주세요."
+}
+```
+
+### 로그아웃
+#### **`POST /api/auth/logout`**
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response:**
+```json
+HTTP Status: 200 OK
+{
+  "message": "로그아웃되었습니다."
+}
+```
+
+> **참고:**
+> - Access Token: 30분 유효, userId와 role 정보 포함
+> - Refresh Token: 7일 유효, userId만 포함
+> - Refresh Token은 Redis 화이트리스트로 관리
+> - Refresh Token Rotation: 토큰 재발급 시 기존 토큰 무효화
+> - 무효화된 Refresh Token 재사용 시도 시 탈취로 간주하여 모든 세션 강제 종료
+
+---
+
 ## 1. 상품 관리 API
 
 ### 상품 목록 조회
@@ -420,6 +552,14 @@ Response:
 ### JavaScript/TypeScript
 ```javascript
 const ErrorCodes = {
+  // 인증 관련
+  EMAIL_ALREADY_EXISTS: 'AUTH001',
+  INVALID_CREDENTIALS: 'AUTH002',
+  SOCIAL_LOGIN_ACCOUNT: 'AUTH003',
+  INVALID_TOKEN: 'AUTH004',
+  TOKEN_HIJACKING_SUSPECTED: 'AUTH005',
+  EXPIRED_TOKEN: 'AUTH006',
+
   // 상품 관련
   PRODUCT_NOT_FOUND: 'P001',
   INSUFFICIENT_STOCK: 'P002',
@@ -449,6 +589,14 @@ const ErrorCodes = {
 ### Java
 ```java
 public class ErrorCodes {
+
+    // 인증 관련
+    public static final String EMAIL_ALREADY_EXISTS = "AUTH001";
+    public static final String INVALID_CREDENTIALS = "AUTH002";
+    public static final String SOCIAL_LOGIN_ACCOUNT = "AUTH003";
+    public static final String INVALID_TOKEN = "AUTH004";
+    public static final String TOKEN_HIJACKING_SUSPECTED = "AUTH005";
+    public static final String EXPIRED_TOKEN = "AUTH006";
 
     // 상품 관련
     public static final String PRODUCT_NOT_FOUND = "P001";

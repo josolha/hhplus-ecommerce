@@ -1,4 +1,12 @@
 package com.sparta.ecommerce.infrastructure.config.security;
 
-public record JwtProperties() {
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "jwt")
+public record JwtProperties(
+        String secret,
+        long accessTokenExpMinutes,
+        long refreshTokenExpDays
+) {
 }

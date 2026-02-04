@@ -10,6 +10,11 @@ import com.sparta.ecommerce.application.user.dto.UserBalanceResponse;
 import com.sparta.ecommerce.domain.coupon.CouponStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +54,55 @@ public class UserController {
      * 잔액 충전
      * POST /api/users/{userId}/balance/charge
      */
-    @Operation(summary = "잔액 충전", description = "사용자의 잔액을 충전합니다")
+    @Operation(
+            summary = "잔액 충전",
+            description = "사용자의 잔액을 충전합니다. 동시성 제어를 통해 안전하게 처리됩니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "잔액 충전 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "userId": "user123",
+                                      "previousBalance": 10000,
+                                      "chargedAmount": 50000,
+                                      "currentBalance": 60000,
+                                      "chargedAt": "2025-02-04T10:30:00"
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "유효하지 않은 충전 금액",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "error": "COMMON001",
+                                      "message": "충전 금액은 0보다 커야 합니다."
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "사용자를 찾을 수 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "error": "COMMON001",
+                                      "message": "사용자를 찾을 수 없습니다."
+                                    }
+                                    """)
+                    )
+            )
+    })
     @PostMapping("/{userId}/balance/charge")
     public ResponseEntity<ChargeBalanceResponse> chargeBalance(
             @Parameter(description = "사용자 ID")
@@ -76,4 +129,5 @@ public class UserController {
         List<UserCouponResponse> coupons = getUserCouponsUseCase.execute(userId, status);
         return ResponseEntity.ok(coupons);
     }
+
 }

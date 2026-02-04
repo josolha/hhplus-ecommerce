@@ -12,6 +12,11 @@ import com.sparta.ecommerce.application.coupon.dto.ValidateCouponRequest;
 import com.sparta.ecommerce.application.coupon.dto.ValidateCouponResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +69,58 @@ public class CouponController {
      * - Redis Set: 중복 방지
      * - Kafka: 비동기 처리 (순서 보장 + 병렬 처리)
      */
-    @Operation(summary = "쿠폰 발급", description = "선착순으로 쿠폰을 발급합니다 (비동기 처리)")
+    @Operation(
+            summary = "쿠폰 발급",
+            description = """
+                    선착순으로 쿠폰을 발급합니다.
+
+                    **동시성 제어 메커니즘:**
+                    - Redis Set: 중복 발급 방지
+                    - Distributed Lock: 수량 제한 관리
+                    - Kafka Queue: 비동기 처리 (순서 보장 + 병렬 처리)
+
+                    **응답:**
+                    - 202 Accepted: 발급 요청이 큐에 등록됨
+                    - 실제 발급은 비동기로 처리되며, 결과는 별도로 확인 필요
+                    """,
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "202",
+                    description = "쿠폰 발급 요청 접수 (비동기 처리 중)",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "queuePosition": 15,
+                                      "message": "쿠폰 발급 요청이 접수되었습니다. 잠시 후 발급이 완료됩니다."
+                                    }
+                                    """)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "쿠폰 수량 소진 또는 이미 발급됨",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(name = "수량 소진", value = """
+                                            {
+                                              "error": "C001",
+                                              "message": "쿠폰이 모두 소진되었습니다."
+                                            }
+                                            """),
+                                    @ExampleObject(name = "중복 발급", value = """
+                                            {
+                                              "error": "C004",
+                                              "message": "이미 발급받은 쿠폰입니다."
+                                            }
+                                            """)
+                            }
+                    )
+            )
+    })
     @PostMapping("/{couponId}/issue")
     public ResponseEntity<CouponQueueResponse> issueCoupon(
             @Parameter(description = "쿠폰 ID") @PathVariable String couponId,

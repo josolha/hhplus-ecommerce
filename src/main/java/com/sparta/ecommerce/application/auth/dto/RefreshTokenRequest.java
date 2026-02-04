@@ -1,4 +1,6 @@
 package com.sparta.ecommerce.application.auth.dto;
 
-public record RefreshTokenRequest() {
+public record RefreshTokenRequest(
+        String refreshToken
+) {
 }

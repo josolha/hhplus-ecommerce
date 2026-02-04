@@ -1,5 +1,6 @@
 package com.sparta.ecommerce;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,12 @@ import java.time.LocalDateTime;
 /**
  * 부하 테스트용 고정 ID 데이터 생성기
  * k6 스크립트에서 사용할 예측 가능한 테스트 데이터 생성
+ * 수동으로만 실행 (자동 테스트에서 제외)
  *
  * 실행 방법:
  * ./gradlew test --tests "LoadTestDataSeeder.seedForLoadTest"
  */
+@Disabled("수동 실행 전용 - 자동 테스트에서 제외")
 @SpringBootTest
 @ActiveProfiles("local")
 @Commit

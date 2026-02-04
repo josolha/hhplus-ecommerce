@@ -2,6 +2,8 @@ package com.sparta.ecommerce.domain.user.repository;
 
 import com.sparta.ecommerce.domain.user.entity.User;
 import jakarta.persistence.LockModeType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -20,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, String> {
      */
     Optional<User> findByUserId(String userId);
 
+    boolean existsByEmail(String email);
+
     /**
      * 잔액 원자적 업데이트 (충전)
      *
@@ -29,6 +33,8 @@ public interface UserRepository extends JpaRepository<User, String> {
      */
     @Query("UPDATE User u SET u.balance.amount = u.balance.amount + :amount WHERE u.userId = :userId")
     int updateBalanceByUserId(@Param("userId") String userId, @Param("amount") long amount);
+
+    Optional<User> findByEmail(String email);
 }
 /*
 public interface UserRepository {
