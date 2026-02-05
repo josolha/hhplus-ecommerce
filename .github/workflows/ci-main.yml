@@ -1,0 +1,38 @@
+name: Main CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  main-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build (skip tests)
+        run: ./gradlew clean assemble
+
+      - name: Run unit tests
+        run: ./gradlew test --tests "unit.*"
+
+      - name: Run integration tests
+        run: ./gradlew test --tests "integration.*"
+
+      # 정적 분석/포맷 체크가 있으면 이걸로(프로젝트에 맞게 선택)
+      # - name: Spotless check
+      #   run: ./gradlew spotlessCheck
+
+      - name: Build bootJar
+        run: ./gradlew bootJar
