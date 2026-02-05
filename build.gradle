@@ -83,8 +83,27 @@ dependencies {
 
 }
 
+// 단위 테스트 (unit 폴더)
 tasks.named('test') {
 	useJUnitPlatform()
+	include '**/unit/**/*Test.class'
+	exclude '**/integration/**/*Test.class'
+}
+
+// 통합 테스트 (integration 폴더)
+task integrationTest(type: Test) {
+	useJUnitPlatform()
+	include '**/integration/**/*Test.class'
+	exclude '**/unit/**/*Test.class'
+
+	// 통합 테스트는 더 많은 메모리 필요
+	maxHeapSize = '2g'
+}
+
+// 모든 테스트 실행
+task allTests(type: Test) {
+	useJUnitPlatform()
+	include '**/*Test.class'
 }
 
 // bootRun 메모리 설정 (Kafka Consumer OutOfMemoryError 방지)
