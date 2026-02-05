@@ -24,11 +24,8 @@ jobs:
       - name: Build (skip tests)
         run: ./gradlew clean assemble
 
-      - name: Run unit tests
-        run: ./gradlew test --tests "unit.*"
-
-      - name: Run integration tests
-        run: ./gradlew test --tests "integration.*"
+      - name: Run all tests (unit + integration)
+        run: ./gradlew allTests
 
       # 정적 분석/포맷 체크가 있으면 이걸로(프로젝트에 맞게 선택)
       # - name: Spotless check
