@@ -1,11 +1,18 @@
-name: Main CI
+name: Main CI/CD
 
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  main-ci:
+  # ======================
+  # 1) CI: PR일 때만
+  # ======================
+  ci:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -21,15 +28,49 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build (skip tests)
+      - name: Start Docker Compose services
+        run: docker-compose up -d mysql redis
+
+      - name: Wait for services to be ready
+        run: |
+          sleep 10
+          docker-compose ps
+
+      - name: Build
         run: ./gradlew clean assemble
 
       - name: Run all tests (unit + integration)
         run: ./gradlew allTests
 
-      # 정적 분석/포맷 체크가 있으면 이걸로(프로젝트에 맞게 선택)
-      # - name: Spotless check
-      #   run: ./gradlew spotlessCheck
+      - name: Stop Docker Compose services
+        if: always()
+        run: docker-compose down
 
-      - name: Build bootJar
-        run: ./gradlew bootJar
+  # ======================
+  # 2) CD: main push(머지)일 때만
+  #    EC2에서 docker compose 실행
+  # ======================
+  cd:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      # 🔐 EC2 접속 후 compose 실행
+      - name: Deploy on EC2 (docker compose)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd ~/ecommerce
+
+            # (이미지 레지스트리가 GHCR이고 private면 로그인 필요)
+            # public이면 아래 2줄은 없어도 됨
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+            docker compose pull
+            docker compose up -d
+            docker compose ps
+            docker image prune -f

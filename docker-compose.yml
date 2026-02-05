@@ -1,12 +1,28 @@
 version: '3.8'
 
 services:
+  app:
+    build: .
+    container_name: ecommerce-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ecommerce
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9094
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+
   kafka:
     image: apache/kafka:latest
     container_name: kafka
     ports:
       - "9092:9092"  # 외부에서 접속할 Kafka 포트
-      - "9093:9093"  # Controller 포트
     environment:
       # === KRaft 모드 설정 (Kafka 3.0+, Zookeeper 불필요) ===
 
@@ -70,6 +86,17 @@ services:
     depends_on:
       - kafka
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ecommerce
+    volumes:
+      - mysql-data:/var/lib/mysql
+
   redis:
     image: redis:latest
     container_name: redis
@@ -112,6 +139,7 @@ services:
 
 volumes:
   kafka-data:
+  mysql-data:
   redis-data:
   prometheus-data:
   grafana-data:

@@ -91,7 +91,7 @@ tasks.named('test') {
 }
 
 // 통합 테스트 (integration 폴더)
-task integrationTest(type: Test) {
+tasks.register('integrationTest', Test) {
 	useJUnitPlatform()
 	include '**/integration/**/*Test.class'
 	exclude '**/unit/**/*Test.class'
@@ -101,7 +101,7 @@ task integrationTest(type: Test) {
 }
 
 // 모든 테스트 실행
-task allTests(type: Test) {
+tasks.register('allTests', Test) {
 	useJUnitPlatform()
 	include '**/*Test.class'
 }
