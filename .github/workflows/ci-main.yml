@@ -64,6 +64,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
+            mkdir -p ~/ecommerce
             cd ~/ecommerce
 
             # (이미지 레지스트리가 GHCR이고 private면 로그인 필요)
